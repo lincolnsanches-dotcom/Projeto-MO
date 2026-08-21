@@ -1645,7 +1645,6 @@
 
     const diaAtivo = dadosSemana[diaAtivoIndex];
     
-    // ATENÇÃO AQUI: declare com P maiúsculo (novoPedido)
     const novoPedido = {
         id: Date.now(),
         data: diaAtivo.data,
@@ -1656,12 +1655,12 @@
         detalhamento: relatorioAtualDados.detalhamento
     };
 
-    // Salva no navegador local
+    // 1. Salva no navegador local
     const pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
     pedidos.push(novoPedido);
     localStorage.setItem('pedidos_bourbon', JSON.stringify(pedidos));
 
-    // Envia para o Firebase (usando P maiúsculo)
+    // 2. Envia para a nuvem no Firebase
     if (typeof window.salvarNoFirebase === 'function') {
         window.salvarNoFirebase(novoPedido);
     }
