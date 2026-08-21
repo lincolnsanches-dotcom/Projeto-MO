@@ -1638,28 +1638,35 @@
     }
 
     function gravarPedidoAtual() {
-        if (!relatorioAtualDados.resumo || relatorioAtualDados.resumo.length === 0) {
-            alert('Gere primeiro o pedido antes de gravar!');
-            return;
-        }
-
-        const diaAtivo = dadosSemana[diaAtivoIndex];
-        const pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
-        
-        const novopedido = {
-            id: Date.now(),
-            data: diaAtivo.data,
-            diaNome: diaAtivo.diaNome,
-            qtdExtras: relatorioAtualDados.totalQtdExtras,
-            custoTotal: relatorioAtualDados.totalCustoGeral,
-            resumo: relatorioAtualDados.resumo,
-            detalhamento: relatorioAtualDados.detalhamento
-        };
-
-        pedidos.push(novopedido);
-        localStorage.setItem('pedidos_bourbon', JSON.stringify(pedidos));
-        alert('Pedido gravado com sucesso no Histórico!');
+    if (!relatorioAtualDados.resumo || relatorioAtualDados.resumo.length === 0) {
+        alert('Gere primeiro o pedido antes de gravar!');
+        return;
     }
+
+    const diaAtivo = dadosSemana[diaAtivoIndex];
+    const novopedido = {
+        id: Date.now(),
+        data: diaAtivo.data,
+        diaNome: diaAtivo.diaNome,
+        qtdExtras: relatorioAtualDados.totalQtdExtras,
+        custoTotal: relatorioAtualDados.totalCustoGeral,
+        resumo: relatorioAtualDados.resumo,
+        detalhamento: relatorioAtualDados.detalhamento
+    };
+
+    // Salva no navegador local
+    const pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
+    pedidos.push(novopedido);
+    localStorage.setItem('pedidos_bourbon', JSON.stringify(pedidos));
+
+    // Envia para o Firebase
+    if (typeof window.salvarNoFirebase === 'function') {
+        window.salvarNoFirebase(novopedido);
+    }
+
+    alert('Pedido gravado com sucesso no Histórico e na Nuvem!');
+    }
+    
 
     function abrirModalHistorico() {
         const modal = document.getElementById('modalHistorico');
@@ -1817,41 +1824,28 @@
     }
     var database = firebase.database();
 
-    // Função global para salvar no banco
     window.salvarNoFirebase = function(dados) {
-      database.ref('historico_pedidos').push({
+    database.ref('historico_pedidos').push({
         ...dados,
         dataRegistro: new Date().toLocaleString("pt-BR")
-      }).then(function() {
+    }).then(function() {
         console.log("Dados gravados com sucesso na nuvem!");
-      }).catch(function(err) {
+    }).catch(function(err) {
         console.error("Erro ao salvar no banco:", err);
-      });// Função global para salvar no banco
-    window.salvarNoFirebase = function(dados) {
-      database.ref('historico_pedidos').push({
-        ...dados,
-        dataRegistro: new Date().toLocaleString("pt-BR")
-      }).then(function() {
-        console.log("Dados gravados com sucesso na nuvem!");
-      }).catch(function(err) {
-        console.error("Erro ao salvar no banco:", err);
-      });
-    };
-
-  // LER DADOS DA NUVEM EM TEMPO REAL E ATUALIZAR O HISTÓRICO LOCAL
-    database.ref('historico_pedidos').on('value', function(snapshot) {
-      var dadosDoFirebase = snapshot.val();
-      if (dadosDoFirebase) {
-        var listaPedidos = Object.values(dadosDoFirebase);
-        // Atualiza a chave padrao de historico do navegador
-        localStorage.setItem('historico_pedidos', JSON.stringify(listaPedidos));
-        localStorage.setItem('pedidos_salvos', JSON.stringify(listaPedidos));
-        console.log("Histórico sincronizado com sucesso da nuvem!");
-      }
     });
-  <script>
+};
+
+// LER DADOS DA NUVEM EM TEMPO REAL E ATUALIZAR O HISTÓRICO LOCAL
+database.ref('historico_pedidos').on('value', function(snapshot) {
+    var dadosDoFirebase = snapshot.val();
+    if (dadosDoFirebase) {
+        var listaPedidos = Object.values(dadosDoFirebase);
+        // Atualiza a chave correta do sistema
+        localStorage.setItem('pedidos_bourbon', JSON.stringify(listaPedidos));
+        console.log("Histórico sincronizado com sucesso da nuvem!");
+    }
+});
+</script>
  
-
-
 </body>
 </html>
