@@ -1655,18 +1655,18 @@
         detalhamento: relatorioAtualDados.detalhamento
     };
 
-    // 1. Salva no navegador local
+    // Salva localmente no navegador
     const pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
     pedidos.push(novoPedido);
     localStorage.setItem('pedidos_bourbon', JSON.stringify(pedidos));
 
-    // 2. Envia para a nuvem no Firebase
+    // Salva na nuvem (Firebase)
     if (typeof window.salvarNoFirebase === 'function') {
         window.salvarNoFirebase(novoPedido);
     }
 
     alert('Pedido gravado com sucesso no Histórico e na Nuvem!');
-    }
+}
     
 
     function abrirModalHistorico() {
