@@ -1771,37 +1771,30 @@
     }
 
     function exportarExcelPedidoSalvo(id) {
-        const pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
-        const ped = pedidos.find(p => p.id === id);
-        if(!ped) return;
+    const pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
+    const ped = pedidos.find(p => p.id === id);
+    if (!ped) {
+        alert('Pedido não encontrado!');
+        return;
+    }
 
-        let csvContent = "data:text/csv;charset=utf-8,Cargo / Funcao;Turno;Horario(s) Entrada (Qtd);Qtd Extras;Valor Diaria (RS);Subtotal (RS)\n";
-        
-        if (ped.resumo) {
-            ped.resumo.forEach(item => {
-                csvContent += `"${item.cargo}";"${item.turno}";"${item.horariosTexto}";"${item.qtd}";"R$ ${item.valorDiaria.toFixed(2)}";"R$ ${item.subtotal.toFixed(2)}"\n`;
-            });
-        }
+    let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+    csvContent += `RELATORIO DE PEDIDO - ${ped.diaNome.toUpperCase()} (${ped.data})\n`;
+    csvContent += `Custo Total: R$ ${ped.custoTotal.toFixed(2).replace('.', ',')}\n\n`;
+    csvContent += "Item;Qtd Folha;Extras;Status;Custo Total\n";
 
-        if (ped.detalhamento) {
-            csvContent += `\n\nDETALHAMENTO POR LOCAL\nLocal;Turno;Cargo / Funcao;Qtd Extras;Entrada;Valor Diaria (RS);Subtotal (RS)\n`;
-            ped.detalhamento.forEach(item => {
-                csvContent += `"${item.setor}";"${item.turno}";"${item.cargo}";"${item.qtd}";"${item.entrada}";"R$ ${item.valorDiaria.toFixed(2)}";"R$ ${item.subtotal.toFixed(2)}"\n`;
-            });
-        }
-        }
+    ped.resumo.forEach(item => {
+        csvContent += `"${item.nome}";${item.qtdFolha};${item.qtdExtras};"${item.status}";"R$ ${item.custoTotal.toFixed(2).replace('.', ',')}"\n`;
+    });
 
-        // Exemplo de como deve ficar dentro da sua função gravarPedidoAtual:
-        window.salvarNoFirebase(novoPedido);
-        
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `Historico_Pedido_Completo_${ped.data}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-              
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Pedido_${ped.diaNome}_${ped.data}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
 </script>
 <!-- BANCO DE DADOS FIREBASE -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
