@@ -3,957 +3,1639 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Master A&B - Dimensionamento e Mão de Obra Extra</title>
-
+    <title>Painel Master A&B - Bourbon</title>
     <style>
         :root {
-            --bg-color: #f4f6f9;
-            --card-bg: #ffffff;
-            --text-color: #333333;
-            --border-color: #e0e0e0;
-            --primary: #2c3e50;
-            --accent: #2980b9;
-            --success: #27ae60;
-            --danger: #c0392b;
-            --warning: #f39c12;
-            --header-bg: #34495e;
-            --font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --primary: #005a36;        
+            --primary-light: #e6f0ec; 
+            --accent: #0d9488;        
+            --success: #10b981;        
+            --text-main: #1f2937;     
+            --text-muted: #64748b;    
+            --bg-body: #f1f5f9;       
+            --border: #cbd5e1;        
+            --danger: #ef4444;
         }
 
+        *, *::before, *::after { box-sizing: border-box; }
+
         body {
-            font-family: var(--font);
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
             margin: 0;
-            padding: 20px;
+            padding: 20px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .container {
-            max-width: 1400px;
-            margin: 0 auto;
+            width: 100%;
+            max-width: 1150px;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border);
         }
 
-        header {
-            background-color: var(--primary);
-            color: #fff;
-            padding: 20px;
-            border-radius: 8px;
+        .header {
+            border-bottom: 2px solid var(--primary-light);
+            padding-bottom: 15px;
             margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        header h1 {
-            margin: 0 0 10px 0;
-            font-size: 24px;
-        }
-
-        header p {
-            margin: 0;
-            font-size: 14px;
-            color: #ecf0f1;
-        }
-
-        /* CONFIGURAÇÃO SEMANAL */
-        .semana-bar {
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h2 { color: var(--primary); margin: 0 0 5px 0; font-size: 22px; font-weight: 700; }
+        .header p { color: var(--text-muted); margin: 0; font-size: 13px; }
+
+        .btn-historico-topo {
+            background-color: #334155;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+
+        .btn-historico-topo:hover { background-color: #1e293b; }
+
+        .semana-tabs {
+            display: flex;
+            gap: 6px;
             overflow-x: auto;
+            margin-bottom: 20px;
             padding-bottom: 5px;
         }
 
-        .dia-btn {
+        .aba-dia {
             flex: 1;
-            min-width: 120px;
-            background: var(--card-bg);
-            border: 2px solid var(--border-color);
-            padding: 10px;
-            border-radius: 6px;
+            min-width: 110px;
+            padding: 10px 8px;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 8px;
             cursor: pointer;
             text-align: center;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
         }
 
-        .dia-btn.active {
-            border-color: var(--accent);
-            background: #ebf5fb;
+        .aba-dia.ativa {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
             font-weight: bold;
         }
 
-        .dia-btn span {
-            display: block;
-            font-size: 12px;
-            color: #7f8c8d;
+        .aba-dia .dia-nome { font-size: 13px; font-weight: 700; display: block; }
+        .aba-dia .dia-pax { font-size: 11px; opacity: 0.85; display: block; margin-top: 2px; }
+
+        .topo-card {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
         }
 
-        .grid-setores {
+        .pax-turnos-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: 180px repeat(3, 1fr);
+            gap: 15px;
+            align-items: flex-start;
+        }
+
+        .bloco-pax-turno {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+        }
+
+        .bloco-pax-turno.sincronizado {
+            border-left: 3px solid var(--primary);
+        }
+
+        .titulo-pax-turno {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .campo { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+        label { font-weight: 600; font-size: 11px; color: var(--text-main); text-transform: uppercase; }
+        
+        input[type="number"], input[type="date"], input[type="text"], select {
+            padding: 6px 8px;
+            border: 1.5px solid var(--border);
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            width: 100%;
+            background-color: white;
+            height: 36px;
+        }
+
+        input[type="checkbox"] {
+            width: 18px !important;
+            height: 18px !important;
+            cursor: pointer;
+            accent-color: var(--primary);
         }
 
         .card-setor {
-            background: var(--card-bg);
+            border: 1.5px solid var(--border);
             border-radius: 8px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 12px;
+            background: #ffffff;
             overflow: hidden;
+            transition: all 0.2s ease;
         }
 
-        .card-header {
-            background: var(--header-bg);
-            color: #fff;
+        .card-setor.fechado { background-color: #f8fafc; border-color: #e2e8f0; opacity: 0.75; }
+        .card-setor.operando { border-color: var(--primary); }
+
+        .setor-header {
             padding: 12px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-weight: bold;
+            background: #ffffff;
+            cursor: pointer;
+            user-select: none;
         }
 
-        .card-body {
-            padding: 15px;
+        .setor-nome {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .form-group {
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; background-color: #94a3b8; }
+        .status-dot.verde { background-color: var(--success); }
+        .status-dot.vermelho { background-color: var(--danger); }
+
+        .toggle-status { display: flex; gap: 8px; align-items: center; }
+
+        .btn-status {
+            border: 1px solid var(--border);
+            background: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-status.op-sim.ativo { background-color: var(--success); color: white; border-color: var(--success); }
+        .btn-status.op-nao.ativo { background-color: var(--danger); color: white; border-color: var(--danger); }
+
+        .badge-resumo-status { font-size: 11px; padding: 3px 8px; border-radius: 12px; font-weight: 600; margin-left: 10px; }
+        .badge-resumo-status.preenchido { background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        .badge-resumo-status.pendente { background-color: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+
+        .setor-corpo { display: none; padding: 15px; border-top: 1px solid var(--border); background-color: #fafafa; }
+
+        .seletor-turnos-setor {
+            background: #e2e8f0;
+            padding: 10px 15px;
+            border-radius: 6px;
             margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
         }
 
-        .form-group label {
-            display: block;
-            font-size: 12px;
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: #555;
+        .seletor-turnos-setor span { font-size: 12px; font-weight: bold; color: var(--primary); }
+        .chk-turno-label { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
+
+        .painel-pax-customizado {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 15px;
         }
 
-        .form-group input, .form-group select {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
+        .grid-inputs-reserva {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 8px;
         }
 
-        /* SEÇÕES DE TURNO */
-        .turno-box {
-            background: #fdfdfd;
-            border: 1px solid #ebdada;
-            border-left: 4px solid var(--accent);
-            padding: 10px;
-            margin-top: 10px;
-            border-radius: 4px;
+        .grid-inputs-reserva .campo {
+            flex: 1;
+            min-width: 180px;
         }
 
-        .turno-box.noite {
-            border-left-color: #8e44ad;
-        }
-
-        .turno-box.madrugada {
-            border-left-color: #2c3e50;
-        }
-
-        .turno-title {
-            font-weight: bold;
-            font-size: 13px;
-            margin-bottom: 8px;
-            color: var(--primary);
+        .turno-bloco { background: white; border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin-bottom: 12px; }
+        .turno-titulo { 
+            font-size: 13px; 
+            font-weight: bold; 
+            color: var(--primary); 
+            margin-bottom: 12px; 
+            text-transform: uppercase; 
+            border-bottom: 2px solid var(--primary-light); 
+            padding-bottom: 5px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        /* CONTROLE DE APORTE EXTRA MANUAL */
-        .cargo-row {
+        .grid-funcao-linha {
             display: grid;
-            grid-template-columns: 1.5fr 1fr 1fr;
-            gap: 8px;
+            grid-template-columns: 2.2fr 1.1fr 1.1fr 1.1fr 1.2fr 42px 42px;
+            gap: 10px;
             align-items: center;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
 
-        .cargo-row label {
-            font-size: 12px;
-            margin: 0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+        .grid-funcao-linha.fracionada {
+            background-color: #f8fafc;
+            padding: 6px 8px;
+            border-radius: 6px;
+            border-left: 4px solid var(--primary);
+            margin-top: -4px;
+            margin-bottom: 10px;
         }
 
-        .cargo-row input {
-            padding: 4px 6px;
-            font-size: 12px;
-        }
-
-        .status-badge {
-            font-size: 11px;
-            padding: 3px 8px;
-            border-radius: 12px;
-            color: #fff;
-        }
-
-        .status-badge.aberto { background: var(--success); }
-        .status-badge.fechado { background: var(--danger); }
-
-        /* RESUMO & ORÇAMENTO */
-        .painel-resumo {
-            background: var(--card-bg);
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            padding: 20px;
-            margin-bottom: 30px;
-        }
-
-        .resumo-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .card-kpi {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            padding: 15px;
+        .badge-qtd-exigido {
+            background-color: #e2e8f0;
+            color: #334155;
+            font-weight: bold;
+            padding: 8px;
             border-radius: 6px;
             text-align: center;
-        }
-
-        .card-kpi h3 {
-            margin: 0 0 5px 0;
-            font-size: 12px;
-            color: #6c757d;
-            text-transform: uppercase;
-        }
-
-        .card-kpi .val {
-            font-size: 22px;
-            font-weight: bold;
-            color: var(--primary);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
             font-size: 13px;
-        }
-
-        table th, table td {
-            border: 1px solid var(--border-color);
-            padding: 8px 12px;
-            text-align: left;
-        }
-
-        table th {
-            background-color: var(--header-bg);
-            color: #fff;
-        }
-
-        table tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-
-        .btn {
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.2s;
-        }
-
-        .btn:hover {
-            background: #1a5276;
-        }
-
-        .btn-success {
-            background: var(--success);
-        }
-        .btn-success:hover {
-            background: #1e8449;
-        }
-
-        .btn-danger {
-            background: var(--danger);
-        }
-
-        .actions-bar {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin-top: 15px;
-        }
-
-        .switch-control {
+            border: 1px solid #cbd5e1;
             display: flex;
             align-items: center;
-            gap: 5px;
-            font-size: 12px;
-            cursor: pointer;
+            justify-content: center;
+            height: 36px;
+            user-select: none;
         }
 
-        .tab-container {
-            margin-bottom: 20px;
-        }
-        
-        .tab-buttons {
-            display: flex;
-            border-bottom: 2px solid var(--border-color);
-        }
-
-        .tab-btn {
-            padding: 10px 20px;
-            cursor: pointer;
-            background: none;
-            border: none;
+        .badge-qtd-extra {
+            background-color: #dcfce7;
+            color: #15803d;
             font-weight: bold;
-            color: #7f8c8d;
-            border-bottom: 2px solid transparent;
-            margin-bottom: -2px;
-        }
-
-        .tab-btn.active {
-            color: var(--accent);
-            border-bottom-color: var(--accent);
-        }
-
-        .tab-content {
-            display: none;
-            padding-top: 20px;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .fracionamento-box {
-            background: #eef9ff;
-            border: 1px dashed #b6e0fe;
             padding: 8px;
-            margin-top: 5px;
-            border-radius: 4px;
-            font-size: 11px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 13px;
+            border: 1px solid #bbf7d0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 36px;
         }
 
-        .fracionamento-row {
+        .btn-acao-linha {
+            height: 36px;
+            width: 36px;
+            font-weight: bold;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
             display: flex;
-            gap: 5px;
-            margin-top: 4px;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
         }
+
+        .btn-add-fracao {
+            background: #e0f2fe;
+            color: #0284c7;
+            border: 1px solid #bae6fd;
+        }
+        .btn-add-fracao:hover { background: #0284c7; color: white; }
+
+        .btn-del-linha {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fca5a5;
+        }
+        .btn-del-linha:hover { background: #dc2626; color: white; }
+
+        .btn-add-funcao {
+            height: 36px;
+            padding: 0 16px;
+            font-weight: bold;
+            font-size: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #e2e8f0;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+            margin-top: 8px;
+        }
+        .btn-add-funcao:hover { background: #cbd5e1; color: var(--primary); }
+
+        .tabela-custom { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        .tabela-custom th, .tabela-custom td { border: 1px solid var(--border); padding: 10px; text-align: left; }
+        .tabela-custom th { background-color: #f8fafc; color: var(--primary); font-weight: 700; }
+
+        .btn-gerar-relatorio { 
+            background-color: #94a3b8; 
+            color: white; 
+            border: none; 
+            padding: 16px 25px; 
+            border-radius: 8px; 
+            font-weight: 700; 
+            cursor: not-allowed;
+            width: 100%;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+
+        .btn-gerar-relatorio.liberado {
+            background-color: var(--success) !important;
+            cursor: pointer !important;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .secao-pedido-valorizado {
+            display: none;
+            margin-top: 25px;
+            background: #ffffff;
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .sub-tabs-relatorio { display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+        .btn-subtab { padding: 8px 16px; background: #f1f5f9; border: 1px solid var(--border); border-radius: 6px; font-weight: 600; font-size: 12px; cursor: pointer; color: var(--text-muted); }
+        .btn-subtab.ativa { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .card-totais-financeiros {
+            display: flex;
+            justify-content: space-between;
+            background: var(--primary-light);
+            border: 1px solid var(--primary);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 15px;
+        }
+
+        .acoes-relatorio { display: flex; gap: 12px; margin-top: 15px; }
+        .btn-acao { padding: 10px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+        .btn-gravar { background-color: #2563eb; color: white; }
+        .btn-excel { background-color: #16a34a; color: white; }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-conteudo {
+            background: white;
+            width: 95%;
+            max-width: 950px;
+            max-height: 85vh;
+            border-radius: 12px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .btn-tbl-acao {
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: none;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-right: 4px;
+        }
+
+        .btn-tbl-ver { background-color: #0284c7; color: white; }
+        .btn-tbl-excel { background-color: #16a34a; color: white; }
+        .btn-tbl-del { background-color: #f87171; color: white; }
+        .btn-tbl-del:hover { background-color: #dc2626; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <header>
-        <h1>Painel Master A&B - Dimensionamento e Mão de Obra Extra</h1>
-        <p>Gestão Inteligente por Setores, Valoração e Dimensionamento Dinâmico por PAX</p>
-    </header>
-
-    <div class="tab-container">
-        <div class="tab-buttons">
-            <button class="tab-btn active" onclick="switchTab('dimensionamento')">Dimensionamento Semanal</button>
-            <button class="tab-btn" onclick="switchTab('parametros')">Parâmetros de Cálculo / Regras PAX</button>
-            <button class="tab-btn" onclick="switchTab('historico')">Histórico de Pedidos</button>
+    <div class="header">
+        <div>
+            <h2>🏢 Dimensionamento Semanal A&B</h2>
+            <p>Validação do Quadro Geral e Geração do Pedido Valorizado</p>
         </div>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <button class="btn-historico-topo" onclick="abrirModalHistorico()">📜 Histórico de Pedidos</button>
+            <div style="font-family: 'Georgia', serif; font-size: 18px; font-weight: bold; color: #005a36; border-left: 3px solid #005a36; padding-left: 12px;">
+                BOURBON
+            </div>
+        </div>
+    </div>
 
-        <!-- ABA 1: DIMENSIONAMENTO SEMANAL -->
-        <div id="tab-dimensionamento" class="tab-content active">
-            <!-- Barra de Seleção do Dia -->
-            <div class="semana-bar" id="semanaBar"></div>
+    <div class="semana-tabs" id="containerAbasSemana"></div>
 
-            <div class="grid-setores" id="gridSetores">
-                <!-- Renderizado via JavaScript -->
+    <div class="topo-card">
+        <div class="pax-turnos-grid">
+            <div class="campo">
+                <label for="dataEscala">Data da Operação:</label>
+                <input type="date" id="dataEscala" onchange="atualizarDataDiaAtual()">
             </div>
 
-            <!-- RELATÓRIO DO DIA SELECIONADO -->
-            <div class="painel-resumo">
-                <h2>Pedido Valorizado do Dia - <span id="lblDiaAtivo"></span></h2>
-                
-                <div class="resumo-grid">
-                    <div class="card-kpi">
-                        <h3>PAX Total Previsto</h3>
-                        <div class="val" id="kpiPaxTotal">0</div>
+            <!-- PAX MANHÃ -->
+            <div class="bloco-pax-turno">
+                <div class="titulo-pax-turno">☕ Manhã (Café)</div>
+                <div style="display: flex; gap: 6px;">
+                    <div class="campo">
+                        <label>Adultos</label>
+                        <input type="number" id="paxManhaAd" value="500" min="0" onchange="atualizarPaxGlobal()">
                     </div>
-                    <div class="card-kpi">
-                        <h3>Total Diárias Extras</h3>
-                        <div class="val" id="kpiTotalDiarias">0</div>
-                    </div>
-                    <div class="card-kpi">
-                        <h3>Custo Estimado M.O. Extra</h3>
-                        <div class="val" id="kpiCustoTotal">R$ 0,00</div>
+                    <div class="campo">
+                        <label>Crianças</label>
+                        <input type="number" id="paxManhaCr" value="0" min="0" onchange="atualizarPaxGlobal()">
                     </div>
                 </div>
+                <div style="font-size: 11px; font-weight: bold; color: var(--primary); margin-top: 6px; text-align: right;" id="lblTotalPaxManha">
+                    500 PAX
+                </div>
+            </div>
 
-                <h3>Resumo Consolidado de Solicitação de Extras (Para Envio)</h3>
-                <table id="tblResumoEnvio">
-                    <thead>
-                        <tr>
-                            <th>Cargo / Função</th>
-                            <th>Turno</th>
-                            <th>Horário(s) Entrada (Qtd)</th>
-                            <th>Qtd Extras</th>
-                            <th>Valor Diária (Ref)</th>
-                            <th>Subtotal</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Linhas Geradas via JS -->
-                    </tbody>
-                </table>
+            <!-- PAX TARDE -->
+            <div class="bloco-pax-turno">
+                <div class="titulo-pax-turno">☀️ Tarde (Almoço)</div>
+                <div style="display: flex; gap: 6px;">
+                    <div class="campo">
+                        <label>Adultos</label>
+                        <input type="number" id="paxTardeAd" value="350" min="0" onchange="atualizarPaxGlobal(true)">
+                    </div>
+                    <div class="campo">
+                        <label>Crianças</label>
+                        <input type="number" id="paxTardeCr" value="0" min="0" onchange="atualizarPaxGlobal(true)">
+                    </div>
+                </div>
+                <div style="font-size: 11px; font-weight: bold; color: var(--primary); margin-top: 6px; text-align: right;" id="lblTotalPaxTarde">
+                    350 PAX
+                </div>
+            </div>
 
-                <h3 style="margin-top:25px;">Detalhamento das Diárias Extras por Local/Setor</h3>
-                <table id="tblDetalhamentoSetor">
-                    <thead>
-                        <tr>
-                            <th>Local / Operação</th>
-                            <th>Turno</th>
-                            <th>Cargo / Função</th>
-                            <th>Qtd Extras</th>
-                            <th>Horário Entrada</th>
-                            <th>Valor Diária</th>
-                            <th>Subtotal</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Linhas Geradas via JS -->
-                    </tbody>
-                </table>
-
-                <div class="actions-bar">
-                    <button class="btn btn-success" onclick="gravarPedidoAtual()">Gravar Pedido no Histórico</button>
-                    <button class="btn" onclick="exportarExcel()">Exportar Planilha (CSV)</button>
+            <!-- PAX MADRUGADA -->
+            <div class="bloco-pax-turno sincronizado">
+                <div class="titulo-pax-turno">
+                    <span>🌙 Madrugada / Noite</span>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                    <div class="campo">
+                        <label>Adultos</label>
+                        <input type="number" id="paxMadrugadaAd" value="350" min="0" onchange="atualizarPaxGlobal()">
+                    </div>
+                    <div class="campo">
+                        <label>Crianças</label>
+                        <input type="number" id="paxMadrugadaCr" value="0" min="0" onchange="atualizarPaxGlobal()">
+                    </div>
+                </div>
+                <div style="font-size: 11px; font-weight: bold; color: var(--primary); margin-top: 6px; text-align: right;" id="lblTotalPaxMadrugada">
+                    350 PAX
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- ABA 2: PARÂMETROS / MATRIZ DE DIMENSIONAMENTO -->
-        <div id="tab-parametros" class="tab-content">
-            <div class="painel-resumo">
-                <h2>Matriz de Dimensionamento PAX / Mão de Obra Fixa + Regra Extra</h2>
-                <p style="font-size:12px; color:#666;">Defina os limites de clientes (PAX) para dimensionamento automático e os valores de diária extra por cargo.</p>
+    <div id="containerSetores"></div>
 
-                <h3>Valores Padrão de Diária (Mão de Obra Extra)</h3>
-                <table id="tblValoresCargos">
-                    <thead>
-                        <tr>
-                            <th>Cargo / Função</th>
-                            <th>Valor Diária (R$)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Linhas geradas via JS -->
-                    </tbody>
-                </table>
+    <button class="btn-gerar-relatorio" id="btnGerarRelatorio" disabled onclick="abrirPedidoValorizado()">
+        🔒 Sinalize todos os locais para liberar o pedido
+    </button>
 
-                <h3 style="margin-top:20px;">Escala Propriedade PAX por Setor</h3>
-                <div id="regrasPaxContainer">
-                    <!-- Configurações Dinâmicas de Regras PAX -->
-                </div>
-
-                <div class="actions-bar">
-                    <button class="btn btn-success" onclick="salvarParametros()">Salvar Parâmetros</button>
-                </div>
-            </div>
+    <div class="secao-pedido-valorizado" id="secaoPedidoValorizado">
+        <h3 style="color:var(--primary); margin-top:0;">📋 Pedido de Extras Valorizado (Confirmado)</h3>
+        
+        <div class="sub-tabs-relatorio">
+            <button class="btn-subtab ativa" id="subTabResumo" onclick="alternarSubTab('resumo')">📊 Resumo por Função e Turno</button>
+            <button class="btn-subtab" id="subTabDetalhamento" onclick="alternarSubTab('detalhamento')">🏢 Detalhamento por Locais</button>
         </div>
 
-        <!-- ABA 3: HISTÓRICO -->
-        <div id="tab-historico" class="tab-content">
-            <div class="painel-resumo">
-                <h2>Histórico de Pedidos Gravados</h2>
-                <table id="tblHistorico">
-                    <thead>
-                        <tr>
-                            <th>Data</th>
-                            <th>Dia da Semana</th>
-                            <th>Total Extras</th>
-                            <th>Custo Total</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Histórico gerado via JS -->
-                    </tbody>
-                </table>
-            </div>
+        <div id="conteudoSubTabResumo">
+            <table class="tabela-custom">
+                <thead>
+                    <tr>
+                        <th>Cargo / Função</th>
+                        <th>Turno</th>
+                        <th>Horário(s) Entrada (Qtd)</th>
+                        <th>Qtd Extras</th>
+                        <th>Valor Diária (R$)</th>
+                        <th>Subtotal (R$)</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoTabelaValores"></tbody>
+            </table>
         </div>
 
+        <div id="conteudoSubTabDetalhamento" style="display: none;">
+            <table class="tabela-custom">
+                <thead>
+                    <tr>
+                        <th>Local / Setor</th>
+                        <th>Turno</th>
+                        <th>Cargo / Função</th>
+                        <th>Qtd Extra</th>
+                        <th>Entrada</th>
+                        <th>Valor Diária (R$)</th>
+                        <th>Subtotal (R$)</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoTabelaDetalhamento"></tbody>
+            </table>
+        </div>
+
+        <div class="card-totais-financeiros">
+            <span>Total de Pessoas Extras: <span id="lblTotalExtrasQtde">0</span></span>
+            <span>Custo Geral Estimado: R$ <span id="lblTotalCustoReais">0,00</span></span>
+        </div>
+
+        <div class="acoes-relatorio">
+            <button class="btn-acao btn-gravar" onclick="gravarPedidoAtual()">💾 Gravar Pedido</button>
+            <button class="btn-acao btn-excel" onclick="exportarExcelPedidoAtual()">📊 Exportar para Excel</button>
+            <button class="btn-acao" style="background:var(--primary); color:white;" onclick="window.print()">🖨️ Imprimir Pedido</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modalHistorico">
+    <div class="modal-conteudo">
+        <div class="modal-header">
+            <h3 style="margin: 0; color: var(--primary);">📜 Histórico de Pedidos Gravados</h3>
+            <button onclick="fecharModalHistorico()" style="background:none; border:none; font-size:18px; cursor:pointer; font-weight:bold;">✕</button>
+        </div>
+        <div id="conteudoHistoricoModal"></div>
     </div>
 </div>
 
 <script>
-    /* ==========================================================================
-       DADOS INICIAIS E ESTRUTURA DE ESTADO
-       ========================================================================== */
-
-    const CARGOS_DISPONIVEIS = [
-        "Cozinheiro", "Auxiliar de Cozinha", "Steward", 
-        "Líder de Steward", "Garçom", "Cumim", 
-        "Líder de Salão / Chefe de Fila", "Barman / Bartender"
-    ];
-
-    let valoresCargos = {
-        "Cozinheiro": 160.00,
-        "Auxiliar de Cozinha": 120.00,
-        "Steward": 110.00,
-        "Líder de Steward": 140.00,
-        "Garçom": 130.00,
-        "Cumim": 100.00,
-        "Líder de Salão / Chefe de Fila": 150.00,
-        "Barman / Bartender": 140.00
+    const VALORES_PADRAO_DIARIA = {
+        "Confeiteiro": 180.00,
+        "Garde Manger": 160.00,
+        "Cozinheiro": 180.00,
+        "Steward": 140.00,
+        "Pizzaiolo": 170.00,
+        "Churrasqueiro": 180.00,
+        "Padeiro": 170.00,
+        "Líder": 200.00,
+        "Sushiman": 190.00,
+        "Açougueiro": 180.00,
+        "Carregador": 140.00,
+        "Legumeria": 140.00,
+        "Refeitório": 140.00
     };
 
-    const SETORES_BASE = [
-        { id: 'rest_central', nome: 'Restaurante Central', tipo: 'restaurante' },
-        { id: 'rest_tematico', nome: 'Restaurante Temático / A la Carte', tipo: 'restaurante' },
-        { id: 'cozinha_central', nome: 'Cozinha Central / Produção', tipo: 'cozinha' },
-        { id: 'steward_geral', nome: 'Steward Central', tipo: 'steward' },
-        { id: 'bar_piscina', nome: 'Bar da Piscina / Lazer', tipo: 'bar' },
-        { id: 'eventos_banquetes', nome: 'Eventos & Banquetes', tipo: 'eventos' }
+    const HORARIOS_POR_TURNO = {
+        manha: ["05:00", "06:00", "07:00", "08:00", "09:00", "10:00", "11:00"],
+        tarde: ["12:00", "13:00", "14:00", "15:00", "16:00", "17:00"],
+        madrugada: ["18:00", "19:00", "20:00", "21:00", "22:00", "23:00", "00:00", "01:00", "02:00", "03:00", "04:00"]
+    };
+
+    const NOME_TURNO_LABEL = { manha: "Manhã", tarde: "Tarde", madrugada: "Madrugada" };
+
+    const LISTA_SETORES = [
+        { nome: "Restaurante TOM", tipo: "restaurante_tom" },
+        { nome: "Restaurante Food Court", tipo: "restaurante_food_court" },
+        { nome: "Restaurante KIBÔ", tipo: "restaurante_kibo" },
+        { nome: "Restaurante Cave", tipo: "restaurante_cave" },
+        { nome: "Restaurante Vezzoso", tipo: "restaurante_vezzoso" },
+        { nome: "Banquetes", tipo: "banquetes" },
+        { nome: "Sport Park", tipo: "sport_park" },
+        { nome: "Sport Park Gira Grill", tipo: "sport_park_giragrill" },
+        { nome: "Acqua Kids", tipo: "acqua_kids" },
+        { nome: "Room Service", tipo: "room_service" },
+        { nome: "Refeitório", tipo: "refeitorio" },
+        { nome: "Almoxarifado", tipo: "almoxarifado" }
     ];
 
     let dadosSemana = [];
     let diaAtivoIndex = 0;
-    let relatorioAtualDados = {};
-
-    /* ==========================================================================
-       INICIALIZAÇÃO DA APLICAÇÃO
-       ========================================================================== */
+    let setoresAbertos = {};
+    let relatorioAtualDados = { resumo: [], detalhamento: [] };
 
     window.onload = function() {
-        carregarParametrosSalvos();
-        inicializarSemana();
-        renderizarBarraSemana();
-        renderizarSetoresDiaAtivo();
-        renderizarTabelaValoresCargos();
-        renderizarHistorico();
+        inicializarDadosSemana();
+        renderizarAbas();
+        carregarDiaAtivo();
     };
 
-    function switchTab(tabId) {
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-
-        event.target.classList.add('active');
-        document.getElementById(`tab-${tabId}`).classList.add('active');
+    function obterPaxParaSetorETurno(setor, turnoKey, diaAtivo) {
+        if (setor.paxReserva && setor.paxReserva.ativo) {
+            return parseInt(setor.paxReserva[turnoKey]) || 0;
+        }
+        const paxGlobalTurno = diaAtivo.paxGlobal[turnoKey];
+        return (parseInt(paxGlobalTurno.adultos) || 0) + (parseInt(paxGlobalTurno.criancas) || 0);
     }
 
-    function inicializarSemana() {
+    function calcularCargosPorSetor(setorObjeto, diaAtivo) {
+        if (!setorObjeto.operando) return { manha: [], tarde: [], madrugada: [] };
+        
+        let manha = [], tarde = [], madrugada = [];
+
+        const criarCargo = (nome, entrada = "07:00", qtd = 1) => ({
+            nome: nome,
+            entrada: entrada,
+            exigido: qtd,
+            fixo: 0,
+            fracionamentos: []
+        });
+
+        // --- MANHÃ (CAFÉ) ---
+        if (setorObjeto.turnosAtivos.manha) {
+            const paxManha = obterPaxParaSetorETurno(setorObjeto, 'manha', diaAtivo);
+
+            switch(setorObjeto.tipo) {
+                case "restaurante_tom":
+                case "restaurante_food_court":
+                    if (paxManha <= 300) {
+                        manha = [
+                            criarCargo("Garde Manger", "06:00", 2),
+                            criarCargo("Confeiteiro", "05:00", 1),
+                            criarCargo("Cozinheiro", "06:00", 7),
+                            criarCargo("Líder", "06:00", 1),
+                            criarCargo("Steward", "06:00", 11)
+                        ];
+                    } else {
+                        manha = [
+                            criarCargo("Garde Manger", "06:00", 3),
+                            criarCargo("Confeiteiro", "05:00", 2),
+                            criarCargo("Cozinheiro", "06:00", 9),
+                            criarCargo("Líder", "06:00", 1),
+                            criarCargo("Steward", "06:00", 11)
+                        ];
+                    }
+                    break;
+
+                case "restaurante_kibo":
+                    manha = [criarCargo("Sushiman", "07:00", 2)];
+                    break;
+
+                case "restaurante_cave":
+                    if (paxManha <= 40) {
+                        manha = [
+                            criarCargo("Cozinheiro", "06:00", 1),
+                            criarCargo("Steward", "07:00", 1)
+                        ];
+                    } else {
+                        manha = [
+                            criarCargo("Cozinheiro", "06:00", 2),
+                            criarCargo("Steward", "07:00", 1)
+                        ];
+                    }
+                    break;
+
+                case "restaurante_vezzoso":
+                    manha = [
+                        criarCargo("Garde Manger", "06:00", 1),
+                        criarCargo("Pizzaiolo", "07:00", 1),
+                        criarCargo("Cozinheiro", "06:00", 3),
+                        criarCargo("Steward", "07:00", 2)
+                    ];
+                    break;
+
+                case "banquetes":
+                    let cozinheirosBanqM = 2;
+                    if (paxManha > 200) {
+                        cozinheirosBanqM += Math.ceil((paxManha - 200) / 100);
+                    }
+                    manha = [
+                        criarCargo("Líder", "07:00", 1),
+                        criarCargo("Cozinheiro", "07:00", cozinheirosBanqM),
+                        criarCargo("Steward", "07:00", 1)
+                    ];
+                    break;
+
+                case "sport_park":
+                    if (paxManha <= 300) {
+                        manha = [
+                            criarCargo("Cozinheiro", "07:00", 3),
+                            criarCargo("Garde Manger", "07:00", 1),
+                            criarCargo("Confeiteiro", "06:00", 1),
+                            criarCargo("Líder", "07:00", 1),
+                            criarCargo("Steward", "07:00", 2)
+                        ];
+                    } else if (paxManha <= 499) {
+                        manha = [
+                            criarCargo("Cozinheiro", "07:00", 4),
+                            criarCargo("Garde Manger", "07:00", 1),
+                            criarCargo("Confeiteiro", "06:00", 1),
+                            criarCargo("Líder", "07:00", 1),
+                            criarCargo("Steward", "07:00", 2)
+                        ];
+                    } else {
+                        manha = [
+                            criarCargo("Cozinheiro", "07:00", 5),
+                            criarCargo("Garde Manger", "07:00", 2),
+                            criarCargo("Confeiteiro", "06:00", 2),
+                            criarCargo("Líder", "07:00", 1),
+                            criarCargo("Steward", "07:00", 2)
+                        ];
+                    }
+                    break;
+
+                case "sport_park_giragrill":
+                    if (paxManha <= 300) {
+                        manha = [
+                            criarCargo("Churrasqueiro", "07:00", 1),
+                            criarCargo("Cozinheiro", "07:00", 3),
+                            criarCargo("Confeiteiro", "06:00", 1),
+                            criarCargo("Garde Manger", "07:00", 1),
+                            criarCargo("Líder", "07:00", 1),
+                            criarCargo("Steward", "07:00", 2)
+                        ];
+                    } else {
+                        manha = [
+                            criarCargo("Churrasqueiro", "07:00", 2),
+                            criarCargo("Cozinheiro", "07:00", 5),
+                            criarCargo("Garde Manger", "07:00", 2),
+                            criarCargo("Confeiteiro", "06:00", 2),
+                            criarCargo("Líder", "07:00", 1),
+                            criarCargo("Steward", "07:00", 2)
+                        ];
+                    }
+                    break;
+
+                case "acqua_kids":
+                case "room_service":
+                case "almoxarifado":
+                    manha = [criarCargo("Cozinheiro", "07:00", 1)];
+                    break;
+
+                case "refeitorio":
+                    manha = [
+                        criarCargo("Cozinheiro", "06:00", 3),
+                        criarCargo("Steward", "07:00", 1)
+                    ];
+                    break;
+
+                default:
+                    manha = [criarCargo("Steward", "07:00", 1)];
+                    break;
+            }
+        }
+
+        // --- TARDE (ALMOÇO / JANTAR) ---
+        if (setorObjeto.turnosAtivos.tarde) {
+            const paxTarde = obterPaxParaSetorETurno(setorObjeto, 'tarde', diaAtivo);
+
+            switch(setorObjeto.tipo) {
+                case "restaurante_tom":
+                case "restaurante_food_court":
+                    if (paxTarde <= 300) {
+                        tarde = [
+                            criarCargo("Garde Manger", "15:00", 2),
+                            criarCargo("Confeiteiro", "14:00", 1),
+                            criarCargo("Cozinheiro", "15:00", 7),
+                            criarCargo("Líder", "15:00", 1),
+                            criarCargo("Pizzaiolo", "16:00", 1),
+                            criarCargo("Steward", "15:00", 11)
+                        ];
+                    } else {
+                        tarde = [
+                            criarCargo("Garde Manger", "15:00", 3),
+                            criarCargo("Confeiteiro", "14:00", 2),
+                            criarCargo("Cozinheiro", "15:00", 9),
+                            criarCargo("Líder", "15:00", 1),
+                            criarCargo("Pizzaiolo", "16:00", 2),
+                            criarCargo("Steward", "15:00", 11)
+                        ];
+                    }
+                    break;
+
+                case "restaurante_kibo":
+                    tarde = [criarCargo("Sushiman", "16:00", 2)];
+                    break;
+
+                case "restaurante_cave":
+                    if (paxTarde <= 40) {
+                        tarde = [
+                            criarCargo("Cozinheiro", "15:00", 1),
+                            criarCargo("Steward", "15:00", 1)
+                        ];
+                    } else {
+                        tarde = [
+                            criarCargo("Cozinheiro", "15:00", 2),
+                            criarCargo("Steward", "15:00", 1)
+                        ];
+                    }
+                    break;
+
+                case "restaurante_vezzoso":
+                    tarde = [
+                        criarCargo("Garde Manger", "15:00", 1),
+                        criarCargo("Pizzaiolo", "16:00", 1),
+                        criarCargo("Cozinheiro", "15:00", 3),
+                        criarCargo("Steward", "15:00", 2)
+                    ];
+                    break;
+
+                case "banquetes":
+                    let cozinheirosBanqT = 2;
+                    if (paxTarde > 200) {
+                        cozinheirosBanqT += Math.ceil((paxTarde - 200) / 100);
+                    }
+                    tarde = [
+                        criarCargo("Líder", "15:00", 1),
+                        criarCargo("Cozinheiro", "15:00", cozinheirosBanqT),
+                        criarCargo("Steward", "15:00", 1)
+                    ];
+                    break;
+
+                case "sport_park":
+                    if (paxTarde <= 300) {
+                        tarde = [
+                            criarCargo("Cozinheiro", "15:00", 3),
+                            criarCargo("Garde Manger", "15:00", 1),
+                            criarCargo("Confeiteiro", "14:00", 1),
+                            criarCargo("Líder", "15:00", 1),
+                            criarCargo("Steward", "15:00", 2)
+                        ];
+                    } else if (paxTarde <= 499) {
+                        tarde = [
+                            criarCargo("Cozinheiro", "15:00", 4),
+                            criarCargo("Garde Manger", "15:00", 1),
+                            criarCargo("Confeiteiro", "14:00", 1),
+                            criarCargo("Líder", "15:00", 1),
+                            criarCargo("Steward", "15:00", 2)
+                        ];
+                    } else {
+                        tarde = [
+                            criarCargo("Cozinheiro", "15:00", 5),
+                            criarCargo("Garde Manger", "15:00", 2),
+                            criarCargo("Confeiteiro", "14:00", 2),
+                            criarCargo("Líder", "15:00", 1),
+                            criarCargo("Steward", "15:00", 2)
+                        ];
+                    }
+                    break;
+
+                case "sport_park_giragrill":
+                    if (paxTarde <= 300) {
+                        tarde = [
+                            criarCargo("Churrasqueiro", "12:00", 1),
+                            criarCargo("Cozinheiro", "15:00", 3),
+                            criarCargo("Confeiteiro", "14:00", 1),
+                            criarCargo("Garde Manger", "15:00", 1),
+                            criarCargo("Líder", "15:00", 1),
+                            criarCargo("Steward", "15:00", 2)
+                        ];
+                    } else {
+                        tarde = [
+                            criarCargo("Churrasqueiro", "12:00", 2),
+                            criarCargo("Cozinheiro", "15:00", 5),
+                            criarCargo("Garde Manger", "15:00", 2),
+                            criarCargo("Confeiteiro", "14:00", 2),
+                            criarCargo("Líder", "15:00", 1),
+                            criarCargo("Steward", "15:00", 2)
+                        ];
+                    }
+                    break;
+
+                case "acqua_kids":
+                case "room_service":
+                case "almoxarifado":
+                    tarde = [criarCargo("Cozinheiro", "15:00", 1)];
+                    break;
+
+                case "refeitorio":
+                    tarde = [
+                        criarCargo("Cozinheiro", "15:00", 2),
+                        criarCargo("Steward", "15:00", 1)
+                    ];
+                    break;
+
+                default:
+                    tarde = [criarCargo("Steward", "15:00", 1)];
+                    break;
+            }
+        }
+
+        // --- MADRUGADA / NOITE ---
+        if (setorObjeto.turnosAtivos.madrugada) {
+            if (setorObjeto.tipo === "restaurante_tom" || setorObjeto.tipo === "restaurante_food_court") {
+                madrugada = [
+                    criarCargo("Líder", "22:00", 1),
+                    criarCargo("Cozinheiro", "22:00", 4),
+                    criarCargo("Steward", "00:00", 11)
+                ];
+            } else {
+                madrugada = [
+                    criarCargo("Cozinheiro", "22:00", 1),
+                    criarCargo("Steward", "00:00", 1)
+                ];
+            }
+        }
+
+        return { manha, tarde, madrugada };
+    }
+
+    function inicializarDadosSemana() {
         const hoje = new Date();
-        const diasSemanaNomes = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+        const diasNomes = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
         dadosSemana = [];
         for (let i = 0; i < 7; i++) {
-            let d = new Date();
-            d.setDate(hoje.getDate() + i);
+            let dataDia = new Date(hoje);
+            dataDia.setDate(hoje.getDate() + i);
 
-            let dataFormatada = d.toLocaleDateString('pt-BR');
-            let nomeDia = diasSemanaNomes[d.getDay()];
+            let paxGlobal = {
+                manha: { adultos: 500, criancas: 0 },
+                tarde: { adultos: 350, criancas: 0 },
+                madrugada: { adultos: 350, criancas: 0 }
+            };
+
+            let estruturaSetores = {};
+            const mockDia = { paxGlobal };
+
+            LISTA_SETORES.forEach(itemSetor => {
+                const turnosIniciais = { manha: true, tarde: true, madrugada: false };
+                let setorObj = {
+                    tipo: itemSetor.tipo,
+                    operando: true,
+                    turnosAtivos: turnosIniciais,
+                    definido: false,
+                    paxReserva: {
+                        ativo: false,
+                        manha: 500,
+                        tarde: 350,
+                        madrugada: 350
+                    }
+                };
+                setorObj.cargos = calcularCargosPorSetor(setorObj, mockDia);
+                estruturaSetores[itemSetor.nome] = setorObj;
+            });
+
+            const ano = dataDia.getFullYear();
+            const mes = String(dataDia.getMonth() + 1).padStart(2, '0');
+            const dia = String(dataDia.getDate()).padStart(2, '0');
 
             dadosSemana.push({
-                data: dataFormatada,
-                diaNome: nomeDia,
-                setores: SETORES_BASE.map(s => ({
-                    id: s.id,
-                    nome: s.nome,
-                    tipo: s.tipo,
-                    status: 'Aberto',
-                    paxPrevisto: 150,
-                    turnos: {
-                        manha: { 
-                            ativo: true, 
-                            horarioEntrada: '06:00', 
-                            cargosExtras: { "Garçom": 0, "Cozinheiro": 0, "Steward": 0, "Auxiliar de Cozinha": 0, "Cumim": 0 },
-                            fracionamento: [] 
-                        },
-                        noite: { 
-                            ativo: true, 
-                            horarioEntrada: '16:00', 
-                            cargosExtras: { "Garçom": 0, "Cozinheiro": 0, "Steward": 0, "Auxiliar de Cozinha": 0, "Cumim": 0 },
-                            fracionamento: [] 
-                        },
-                        madrugada: { 
-                            ativo: false, 
-                            horarioEntrada: '23:00', 
-                            cargosExtras: { "Steward": 0, "Auxiliar de Cozinha": 0 },
-                            fracionamento: [] 
-                        }
-                    }
-                }))
+                diaNome: diasNomes[dataDia.getDay()],
+                data: `${ano}-${mes}-${dia}`,
+                paxGlobal: paxGlobal,
+                setores: estruturaSetores
             });
         }
     }
 
-    /* ==========================================================================
-       RENDERIZAÇÃO DE INTERFACE
-       ========================================================================== */
-
-    function renderizarBarraSemana() {
-        const container = document.getElementById('semanaBar');
-        container.innerHTML = '';
-
+    function renderizarAbas() {
+        const container = document.getElementById('containerAbasSemana');
+        container.innerHTML = "";
         dadosSemana.forEach((dia, index) => {
+            const totalPaxCafes = dia.paxGlobal.manha.adultos + dia.paxGlobal.manha.criancas;
             const btn = document.createElement('div');
-            btn.className = `dia-btn ${index === diaAtivoIndex ? 'active' : ''}`;
-            btn.onclick = () => selecionarDia(index);
+            btn.className = `aba-dia ${index === diaAtivoIndex ? 'ativa' : ''}`;
+            btn.onclick = () => trocardia(index);
             btn.innerHTML = `
-                <strong>${dia.diaNome}</strong>
-                <span>${dia.data}</span>
+                <span class="dia-nome">${dia.diaNome}</span>
+                <span class="dia-pax">${totalPaxCafes} PAX (Café)</span>
             `;
             container.appendChild(btn);
         });
     }
 
-    function selecionarDia(index) {
+    function trocardia(index) {
         diaAtivoIndex = index;
-        renderizarBarraSemana();
+        document.getElementById('secaoPedidoValorizado').style.display = 'none';
+        renderizarAbas();
+        carregarDiaAtivo();
+    }
+
+    function carregarDiaAtivo() {
+        const dia = dadosSemana[diaAtivoIndex];
+        document.getElementById('dataEscala').value = dia.data;
+        
+        document.getElementById('paxManhaAd').value = dia.paxGlobal.manha.adultos;
+        document.getElementById('paxManhaCr').value = dia.paxGlobal.manha.criancas;
+        document.getElementById('lblTotalPaxManha').innerText = `${dia.paxGlobal.manha.adultos + dia.paxGlobal.manha.criancas} PAX`;
+
+        document.getElementById('paxTardeAd').value = dia.paxGlobal.tarde.adultos;
+        document.getElementById('paxTardeCr').value = dia.paxGlobal.tarde.criancas;
+        document.getElementById('lblTotalPaxTarde').innerText = `${dia.paxGlobal.tarde.adultos + dia.paxGlobal.tarde.criancas} PAX`;
+
+        document.getElementById('paxMadrugadaAd').value = dia.paxGlobal.madrugada.adultos;
+        document.getElementById('paxMadrugadaCr').value = dia.paxGlobal.madrugada.criancas;
+        document.getElementById('lblTotalPaxMadrugada').innerText = `${dia.paxGlobal.madrugada.adultos + dia.paxGlobal.madrugada.criancas} PAX`;
+
         renderizarSetoresDiaAtivo();
+        verificarEValidadorGeral();
+    }
+
+    function atualizarDataDiaAtual() {
+        const dataVal = document.getElementById('dataEscala').value;
+        if (!dataVal) return;
+
+        const partes = dataVal.split('-');
+        const diasNomes = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+        for (let i = 0; i < dadosSemana.length; i++) {
+            if (i >= diaAtivoIndex) {
+                let dataDia = new Date(partes[0], partes[1] - 1, partes[2]);
+                dataDia.setDate(dataDia.getDate() + (i - diaAtivoIndex));
+
+                const ano = dataDia.getFullYear();
+                const mes = String(dataDia.getMonth() + 1).padStart(2, '0');
+                const dia = String(dataDia.getDate()).padStart(2, '0');
+
+                dadosSemana[i].data = `${ano}-${mes}-${dia}`;
+                dadosSemana[i].diaNome = diasNomes[dataDia.getDay()];
+            }
+        }
+
+        renderizarAbas();
+    }
+
+    function atualizarPaxGlobal(replicarTardeParaMadrugada = false) {
+        const diaAtivo = dadosSemana[diaAtivoIndex];
+
+        diaAtivo.paxGlobal.manha.adultos = parseInt(document.getElementById('paxManhaAd').value) || 0;
+        diaAtivo.paxGlobal.manha.criancas = parseInt(document.getElementById('paxManhaCr').value) || 0;
+
+        diaAtivo.paxGlobal.tarde.adultos = parseInt(document.getElementById('paxTardeAd').value) || 0;
+        diaAtivo.paxGlobal.tarde.criancas = parseInt(document.getElementById('paxTardeCr').value) || 0;
+
+        if (replicarTardeParaMadrugada) {
+            diaAtivo.paxGlobal.madrugada.adultos = diaAtivo.paxGlobal.tarde.adultos;
+            diaAtivo.paxGlobal.madrugada.criancas = diaAtivo.paxGlobal.tarde.criancas;
+            document.getElementById('paxMadrugadaAd').value = diaAtivo.paxGlobal.madrugada.adultos;
+            document.getElementById('paxMadrugadaCr').value = diaAtivo.paxGlobal.madrugada.criancas;
+        } else {
+            diaAtivo.paxGlobal.madrugada.adultos = parseInt(document.getElementById('paxMadrugadaAd').value) || 0;
+            diaAtivo.paxGlobal.madrugada.criancas = parseInt(document.getElementById('paxMadrugadaCr').value) || 0;
+        }
+
+        document.getElementById('lblTotalPaxManha').innerText = `${diaAtivo.paxGlobal.manha.adultos + diaAtivo.paxGlobal.manha.criancas} PAX`;
+        document.getElementById('lblTotalPaxTarde').innerText = `${diaAtivo.paxGlobal.tarde.adultos + diaAtivo.paxGlobal.tarde.criancas} PAX`;
+        document.getElementById('lblTotalPaxMadrugada').innerText = `${diaAtivo.paxGlobal.madrugada.adultos + diaAtivo.paxGlobal.madrugada.criancas} PAX`;
+
+        recalcularCargosDosSetores();
+        renderizarAbas();
+        renderizarSetoresDiaAtivo();
+        verificarEValidadorGeral();
+
+        if (document.getElementById('secaoPedidoValorizado').style.display === 'block') {
+            abrirPedidoValorizado();
+        }
+    }
+
+    function recalcularCargosDosSetores() {
+        const diaAtivo = dadosSemana[diaAtivoIndex];
+        Object.keys(diaAtivo.setores).forEach(nomeSetor => {
+            const setor = diaAtivo.setores[nomeSetor];
+            if(setor.operando) {
+                const calculados = calcularCargosPorSetor(setor, diaAtivo);
+                ['manha', 'tarde', 'madrugada'].forEach(turnoKey => {
+                    if (setor.turnosAtivos[turnoKey]) {
+                        calculados[turnoKey].forEach((novoCargo, idx) => {
+                            if (setor.cargos[turnoKey] && setor.cargos[turnoKey][idx]) {
+                                setor.cargos[turnoKey][idx].exigido = novoCargo.exigido;
+                            } else {
+                                if(!setor.cargos[turnoKey]) setor.cargos[turnoKey] = [];
+                                setor.cargos[turnoKey].push(novoCargo);
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    function toggleAbrirSetor(nomeSetor) {
+        setoresAbertos[nomeSetor] = !setoresAbertos[nomeSetor];
+        const el = document.getElementById(`corpo-${sanitizarId(nomeSetor)}`);
+        if (el) el.style.display = setoresAbertos[nomeSetor] ? 'block' : 'none';
+    }
+
+    function sanitizarId(str) {
+        return str.replace(/[^a-zA-Z0-9]/g, '_');
+    }
+
+    function alterarStatusOperacao(nomeSetor, statusOperando) {
+        const diaAtivo = dadosSemana[diaAtivoIndex];
+        const setor = diaAtivo.setores[nomeSetor];
+        setor.operando = statusOperando;
+        setor.definido = true;
+
+        if (setor.operando) {
+            setor.cargos = calcularCargosPorSetor(setor, diaAtivo);
+        } else {
+            setor.cargos = { manha: [], tarde: [], madrugada: [] };
+        }
+
+        renderizarSetoresDiaAtivo();
+        verificarEValidadorGeral();
+
+        if (document.getElementById('secaoPedidoValorizado').style.display === 'block') {
+            abrirPedidoValorizado();
+        }
+    }
+
+    function toggleTurnoSetor(nomeSetor, turnoKey, checkbox) {
+        const diaAtivo = dadosSemana[diaAtivoIndex];
+        const setor = diaAtivo.setores[nomeSetor];
+        setor.turnosAtivos[turnoKey] = checkbox.checked;
+
+        if (checkbox.checked) {
+            const rec = calcularCargosPorSetor(setor, diaAtivo);
+            setor.cargos[turnoKey] = rec[turnoKey];
+        } else {
+            setor.cargos[turnoKey] = [];
+        }
+
+        setor.definido = true;
+        renderizarSetoresDiaAtivo();
+        verificarEValidadorGeral();
+
+        if (document.getElementById('secaoPedidoValorizado').style.display === 'block') {
+            abrirPedidoValorizado();
+        }
+    }
+
+    function togglePaxReserva(nomeSetor, checkbox) {
+        const diaAtivo = dadosSemana[diaAtivoIndex];
+        const setor = diaAtivo.setores[nomeSetor];
+        setor.paxReserva.ativo = checkbox.checked;
+
+        recalcularCargosDosSetores();
+        renderizarSetoresDiaAtivo();
+        verificarEValidadorGeral();
+
+        if (document.getElementById('secaoPedidoValorizado').style.display === 'block') {
+            abrirPedidoValorizado();
+        }
+    }
+
+    function atualizarPaxReservaInput(nomeSetor, turnoKey, valor) {
+        const diaAtivo = dadosSemana[diaAtivoIndex];
+        const setor = diaAtivo.setores[nomeSetor];
+        setor.paxReserva[turnoKey] = parseInt(valor) || 0;
+
+        recalcularCargosDosSetores();
+        renderizarSetoresDiaAtivo();
+        verificarEValidadorGeral();
+
+        if (document.getElementById('secaoPedidoValorizado').style.display === 'block') {
+            abrirPedidoValorizado();
+        }
     }
 
     function renderizarSetoresDiaAtivo() {
-        const grid = document.getElementById('gridSetores');
-        grid.innerHTML = '';
-
+        const container = document.getElementById('containerSetores');
         const diaAtivo = dadosSemana[diaAtivoIndex];
-        document.getElementById('lblDiaAtivo').innerText = `${diaAtivo.diaNome} (${diaAtivo.data})`;
+        container.innerHTML = "";
 
-        diaAtivo.setores.forEach((setor, sIndex) => {
+        Object.keys(diaAtivo.setores).forEach(nomeSetor => {
+            const setor = diaAtivo.setores[nomeSetor];
+            const estaAberto = !!setoresAbertos[nomeSetor];
+            const sId = sanitizarId(nomeSetor);
+
             const card = document.createElement('div');
-            card.className = 'card-setor';
+            card.className = `card-setor ${setor.operando ? 'operando' : 'fechado'}`;
 
-            let htmlTurnos = '';
-            
-            // Loop pelos Turnos
-            ['manha', 'noite', 'madrugada'].forEach(tKey => {
-                const turno = setor.turnos[tKey];
-                const tNome = tKey === 'manha' ? 'Manhã/Almoço' : (tKey === 'noite' ? 'Noite/Jantar' : 'Madrugada/Ceia');
-
-                let htmlCargos = '';
-                Object.keys(turno.cargosExtras).forEach(cargo => {
-                    const qtd = turno.cargosExtras[cargo];
-                    htmlCargos += `
-                        <div class="cargo-row">
-                            <label title="${cargo}">${cargo}</label>
-                            <input type="number" min="0" value="${qtd}" onchange="atualizarCargoExtra(${sIndex}, '${tKey}', '${cargo}', this.value)">
-                            <span style="font-size:10px; color:#777;">(R$ ${valoresCargos[cargo] || 0})</span>
-                        </div>
-                    `;
-                });
-
-                // HTML do Fracionamento de Horários
-                let htmlFracionamento = '';
-                if(turno.fracionamento && turno.fracionamento.length > 0) {
-                    turno.fracionamento.forEach((frac, fIndex) => {
-                        htmlFracionamento += `
-                            <div class="fracionamento-row">
-                                <input type="time" value="${frac.horario}" onchange="atualizarFrac(${sIndex}, '${tKey}', ${fIndex}, 'horario', this.value)">
-                                <select onchange="atualizarFrac(${sIndex}, '${tKey}', ${fIndex}, 'cargo', this.value)">
-                                    ${CARGOS_DISPONIVEIS.map(c => `<option value="${c}" ${c === frac.cargo ? 'selected':''}>${c}</option>`).join('')}
-                                </select>
-                                <input type="number" style="width:50px" min="1" value="${frac.qtd}" onchange="atualizarFrac(${sIndex}, '${tKey}', ${fIndex}, 'qtd', this.value)">
-                                <button class="btn btn-danger" style="padding:2px 5px; font-size:10px;" onclick="removerFrac(${sIndex}, '${tKey}', ${fIndex})">X</button>
-                            </div>
-                        `;
-                    });
-                }
-
-                htmlTurnos += `
-                    <div class="turno-box ${tKey}">
-                        <div class="turno-title">
-                            <span>
-                                <input type="checkbox" ${turno.ativo ? 'checked' : ''} onchange="toggleTurnoAtivo(${sIndex}, '${tKey}', this.checked)">
-                                ${tNome}
-                            </span>
-                            <input type="time" value="${turno.horarioEntrada}" style="width:80px; padding:2px;" onchange="atualizarHorarioTurno(${sIndex}, '${tKey}', this.value)">
-                        </div>
-                        ${turno.ativo ? `
-                            ${htmlCargos}
-                            <div class="fracionamento-box">
-                                <strong>Horários Fracionados (Entradas Diferenciadas):</strong>
-                                ${htmlFracionamento}
-                                <button class="btn" style="margin-top:5px; padding:3px 8px; font-size:10px;" onclick="adicionarFracionamento(${sIndex}, '${tKey}')">+ Entradas Fracionadas</button>
-                            </div>
-                        ` : '<div style="font-size:11px; color:#999;">Turno inativo</div>'}
+            let htmlHeader = `
+                <div class="setor-header" onclick="toggleAbrirSetor('${nomeSetor}')">
+                    <div class="setor-nome">
+                        <span class="status-dot ${setor.operando ? 'verde' : 'vermelho'}"></span>
+                        <span>${nomeSetor}</span>
+                        <span class="badge-resumo-status ${setor.definido ? 'preenchido' : 'pendente'}">
+                            ${setor.definido ? 'Preenchido' : 'Pendente'}
+                        </span>
                     </div>
-                `;
-            });
-
-            card.innerHTML = `
-                <div class="card-header">
-                    <span>${setor.nome}</span>
-                    <label class="switch-control">
-                        <input type="checkbox" ${setor.status === 'Aberto' ? 'checked' : ''} onchange="toggleStatusSetor(${sIndex}, this.checked)">
-                        ${setor.status}
-                    </label>
-                </div>
-                <div class="card-body">
-                    <div class="form-group">
-                        <label>PAX Previsto no Setor:</label>
-                        <input type="number" value="${setor.paxPrevisto}" onchange="atualizarPaxSetor(${sIndex}, this.value)" ${setor.status === 'Fechado' ? 'disabled' : ''}>
+                    <div class="toggle-status" onclick="event.stopPropagation()">
+                        <button class="btn-status op-sim ${setor.operando ? 'ativo' : ''}" onclick="alterarStatusOperacao('${nomeSetor}', true)">ABERTO</button>
+                        <button class="btn-status op-nao ${!setor.operando ? 'ativo' : ''}" onclick="alterarStatusOperacao('${nomeSetor}', false)">FECHADO</button>
                     </div>
-                    ${setor.status === 'Aberto' ? htmlTurnos : '<div style="color:var(--danger); font-weight:bold; padding:10px; text-align:center;">SETOR FECHADO NO DIA</div>'}
                 </div>
             `;
 
-            grid.appendChild(card);
-        });
+            let htmlCorpo = `<div class="setor-corpo" id="corpo-${sId}" style="display:${estaAberto ? 'block' : 'none'};">`;
 
-        calcularEAtualizarRelatorioDia();
-    }
+            if (setor.operando) {
+                htmlCorpo += `
+                    <div class="seletor-turnos-setor">
+                        <span>Turnos Ativos no Local:</span>
+                        <label class="chk-turno-label"><input type="checkbox" ${setor.turnosAtivos.manha ? 'checked' : ''} onchange="toggleTurnoSetor('${nomeSetor}', 'manha', this)"> Manhã</label>
+                        <label class="chk-turno-label"><input type="checkbox" ${setor.turnosAtivos.tarde ? 'checked' : ''} onchange="toggleTurnoSetor('${nomeSetor}', 'tarde', this)"> Tarde</label>
+                        <label class="chk-turno-label"><input type="checkbox" ${setor.turnosAtivos.madrugada ? 'checked' : ''} onchange="toggleTurnoSetor('${nomeSetor}', 'madrugada', this)"> Madrugada</label>
+                    </div>
 
-    /* ==========================================================================
-       LÓGICA DE ATUALIZAÇÃO DE DADOS DA TELA
-       ========================================================================== */
+                    <div class="painel-pax-customizado">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <label class="chk-turno-label" style="font-size: 13px; color: var(--primary);">
+                                <input type="checkbox" ${setor.paxReserva.ativo ? 'checked' : ''} onchange="togglePaxReserva('${nomeSetor}', this)">
+                                📌 Personalizar PAX por Período para este local (Substitui o PAX Geral)
+                            </label>
+                        </div>
+                        ${setor.paxReserva.ativo ? `
+                            <div class="grid-inputs-reserva">
+                                ${setor.turnosAtivos.manha ? `<div class="campo"><label>PAX Manhã (Café)</label><input type="number" value="${setor.paxReserva.manha}" min="0" onchange="atualizarPaxReservaInput('${nomeSetor}', 'manha', this.value)"></div>` : ''}
+                                ${setor.turnosAtivos.tarde ? `<div class="campo"><label>PAX Tarde (Almoço)</label><input type="number" value="${setor.paxReserva.tarde}" min="0" onchange="atualizarPaxReservaInput('${nomeSetor}', 'tarde', this.value)"></div>` : ''}
+                                ${setor.turnosAtivos.madrugada ? `<div class="campo"><label>PAX Madrugada / Noite</label><input type="number" value="${setor.paxReserva.madrugada}" min="0" onchange="atualizarPaxReservaInput('${nomeSetor}', 'madrugada', this.value)"></div>` : ''}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
 
-    function toggleStatusSetor(setorIndex, checked) {
-        dadosSemana[diaAtivoIndex].setores[setorIndex].status = checked ? 'Aberto' : 'Fechado';
-        renderizarSetoresDiaAtivo();
-    }
-
-    function atualizarPaxSetor(setorIndex, val) {
-        dadosSemana[diaAtivoIndex].setores[setorIndex].paxPrevisto = parseInt(val) || 0;
-        calcularEAtualizarRelatorioDia();
-    }
-
-    function toggleTurnoAtivo(setorIndex, turnoKey, checked) {
-        dadosSemana[diaAtivoIndex].setores[setorIndex].turnos[turnoKey].ativo = checked;
-        renderizarSetoresDiaAtivo();
-    }
-
-    function atualizarHorarioTurno(setorIndex, turnoKey, val) {
-        dadosSemana[diaAtivoIndex].setores[setorIndex].turnos[turnoKey].horarioEntrada = val;
-        calcularEAtualizarRelatorioDia();
-    }
-
-    function atualizarCargoExtra(setorIndex, turnoKey, cargo, qtd) {
-        dadosSemana[diaAtivoIndex].setores[setorIndex].turnos[turnoKey].cargosExtras[cargo] = parseInt(qtd) || 0;
-        calcularEAtualizarRelatorioDia();
-    }
-
-    function adicionarFracionamento(setorIndex, turnoKey) {
-        const turno = dadosSemana[diaAtivoIndex].setores[setorIndex].turnos[turnoKey];
-        if(!turno.fracionamento) turno.fracionamento = [];
-        turno.fracionamento.push({ horario: '08:00', cargo: 'Garçom', qtd: 1 });
-        renderizarSetoresDiaAtivo();
-    }
-
-    function atualizarFrac(setorIndex, turnoKey, fracIndex, campo, valor) {
-        const frac = dadosSemana[diaAtivoIndex].setores[setorIndex].turnos[turnoKey].fracionamento[fracIndex];
-        if(campo === 'qtd') valor = parseInt(valor) || 0;
-        frac[campo] = valor;
-        calcularEAtualizarRelatorioDia();
-    }
-
-    function removerFrac(setorIndex, turnoKey, fracIndex) {
-        dadosSemana[diaAtivoIndex].setores[setorIndex].turnos[turnoKey].fracionamento.splice(fracIndex, 1);
-        renderizarSetoresDiaAtivo();
-    }
-
-    /* ==========================================================================
-       CÁLCULOS E GERAÇÃO DE RELATÓRIO DO DIA
-       ========================================================================== */
-
-    function calcularEAtualizarRelatorioDia() {
-        const diaAtivo = dadosSemana[diaAtivoIndex];
-        
-        let paxTotalSemana = 0;
-        let totalDiariasExtras = 0;
-        let custoTotalExtras = 0;
-
-        let detalhamento = [];
-        let consolidado = {}; 
-
-        diaAtivo.setores.forEach(setor => {
-            if (setor.status === 'Fechado') return;
-
-            paxTotalSemana += setor.paxPrevisto;
-
-            ['manha', 'noite', 'madrugada'].forEach(tKey => {
-                const turno = setor.turnos[tKey];
-                if (!turno.ativo) return;
-
-                const tNome = tKey === 'manha' ? 'Manhã' : (tKey === 'noite' ? 'Noite' : 'Madrugada');
-
-                // Processar cargos normais do turno
-                Object.keys(turno.cargosExtras).forEach(cargo => {
-                    const qtd = turno.cargosExtras[cargo];
-                    if (qtd > 0) {
-                        const vUnit = valoresCargos[cargo] || 0;
-                        const subtotal = qtd * vUnit;
-
-                        totalDiariasExtras += qtd;
-                        custoTotalExtras += subtotal;
-
-                        detalhamento.push({
-                            setor: setor.nome,
-                            turno: tNome,
-                            cargo: cargo,
-                            qtd: qtd,
-                            entrada: turno.horarioEntrada,
-                            valorDiaria: vUnit,
-                            subtotal: subtotal
-                        });
-
-                        // Agrupar Consolidado
-                        let key = `${cargo}_${tNome}`;
-                        if (!consolidado[key]) {
-                            consolidado[key] = {
-                                cargo: cargo,
-                                turno: tNome,
-                                qtdTotal: 0,
-                                subtotal: 0,
-                                entradas: {}
-                            };
-                        }
-                        consolidado[key].qtdTotal += qtd;
-                        consolidado[key].subtotal += subtotal;
-                        consolidado[key].entradas[turno.horarioEntrada] = (consolidado[key].entradas[turno.horarioEntrada] || 0) + qtd;
+                ['manha', 'tarde', 'madrugada'].forEach(turnoKey => {
+                    if (setor.turnosAtivos[turnoKey]) {
+                        htmlCorpo += `
+                            <div class="turno-bloco">
+                                <div class="turno-titulo">
+                                    <span>Turno: ${NOME_TURNO_LABEL[turnoKey]}</span>
+                                </div>
+                                ${renderizarLinhasCargo(nomeSetor, turnoKey)}
+                                <button class="btn-add-funcao" onclick="adicionarNovoCargo('${nomeSetor}', '${turnoKey}')">➕ Adicionar Função</button>
+                            </div>
+                        `;
                     }
                 });
+            } else {
+                htmlCorpo += `<p style="font-size:13px; color:var(--text-muted); font-style:italic;">Setor sinalizado como FECHADO nesta data. Nenhum extra será contabilizado.</p>`;
+            }
 
-                // Processar Fracionamentos
-                if (turno.fracionamento) {
-                    turno.fracionamento.forEach(frac => {
-                        if (frac.qtd > 0) {
-                            const vUnit = valoresCargos[frac.cargo] || 0;
-                            const subtotal = frac.qtd * vUnit;
+            htmlCorpo += `</div>`;
+            card.innerHTML = htmlHeader + htmlCorpo;
+            container.appendChild(card);
+        });
+    }
 
-                            totalDiariasExtras += frac.qtd;
-                            custoTotalExtras += subtotal;
+    function renderizarLinhasCargo(nomeSetor, turnoKey) {
+        const diaAtivo = dadosSemana[diaAtivoIndex];
+        const cargos = diaAtivo.setores[nomeSetor].cargos[turnoKey] || [];
+        if (cargos.length === 0) return `<p style="font-size:12px; color:var(--text-muted);">Nenhuma função parametrizada.</p>`;
 
-                            detalhamento.push({
-                                setor: setor.nome + ' (Fracionado)',
-                                turno: tNome,
-                                cargo: frac.cargo,
-                                qtd: frac.qtd,
-                                entrada: frac.horario,
-                                valorDiaria: vUnit,
-                                subtotal: subtotal
-                            });
+        let html = "";
+        cargos.forEach((cargo, index) => {
+            const disponivelFixo = cargo.fixo || 0;
+            const exigido = cargo.exigido || 0;
 
-                            let key = `${frac.cargo}_${tNome}`;
-                            if (!consolidado[key]) {
-                                consolidado[key] = {
-                                    cargo: frac.cargo,
-                                    turno: tNome,
-                                    qtdTotal: 0,
-                                    subtotal: 0,
-                                    entradas: {}
-                                };
-                            }
-                            consolidado[key].qtdTotal += frac.qtd;
-                            consolidado[key].subtotal += subtotal;
-                            consolidado[key].entradas[frac.horario] = (consolidado[key].entradas[frac.horario] || 0) + frac.qtd;
-                        }
-                    });
-                }
-            });
+            const somaFracionamentos = (cargo.fracionamentos || []).reduce((acc, f) => acc + (parseInt(f.qtd) || 0), 0);
+            const extraPrincipal = Math.max(0, exigido - disponivelFixo - somaFracionamentos);
+
+            html += `
+                <div class="grid-funcao-linha">
+                    <div class="campo">
+                        <label>Função</label>
+                        <select onchange="atualizarCargoProp('${nomeSetor}', '${turnoKey}', ${index}, 'nome', this.value)">
+                            ${Object.keys(VALORES_PADRAO_DIARIA).map(f => `<option value="${f}" ${f === cargo.nome ? 'selected' : ''}>${f}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="campo">
+                        <label>Entrada</label>
+                        <select onchange="atualizarCargoProp('${nomeSetor}', '${turnoKey}', ${index}, 'entrada', this.value)">
+                            ${HORARIOS_POR_TURNO[turnoKey].map(h => `<option value="${h}" ${h === cargo.entrada ? 'selected' : ''}>${h}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="campo">
+                        <label>Exigido</label>
+                        <div class="badge-qtd-exigido">${exigido}</div>
+                    </div>
+                    <div class="campo">
+                        <label>Quadro Fixo</label>
+                        <input type="number" value="${disponivelFixo}" min="0" onchange="atualizarCargoProp('${nomeSetor}', '${turnoKey}', ${index}, 'fixo', this.value)">
+                    </div>
+                    <div class="campo">
+                        <label>Extras</label>
+                        <div class="badge-qtd-extra">${extraPrincipal}</div>
+                    </div>
+                    <button class="btn-acao-linha btn-add-fracao" title="Fracionar Horário de Entrada" onclick="adicionarFracionamento('${nomeSetor}', '${turnoKey}', ${index})">⏱️</button>
+                    <button class="btn-acao-linha btn-del-linha" title="Excluir Linha" onclick="removerCargo('${nomeSetor}', '${turnoKey}', ${index})">🗑️</button>
+                </div>
+            `;
+
+            if (cargo.fracionamentos && cargo.fracionamentos.length > 0) {
+                cargo.fracionamentos.forEach((frac, fIdx) => {
+                    html += `
+                        <div class="grid-funcao-linha fracionada">
+                            <div style="font-size:11px; font-weight:bold; color:var(--primary);">↳ Fracionamento ${fIdx + 1}</div>
+                            <div class="campo">
+                                <label>Entrada</label>
+                                <select onchange="atualizarFracaoProp('${nomeSetor}', '${turnoKey}', ${index}, ${fIdx}, 'entrada', this.value)">
+                                    ${HORARIOS_POR_TURNO[turnoKey].map(h => `<option value="${h}" ${h === frac.entrada ? 'selected' : ''}>${h}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div class="campo">
+                                <label>Qtd Extras</label>
+                                <input type="number" value="${frac.qtd}" min="1" onchange="atualizarFracaoProp('${nomeSetor}', '${turnoKey}', ${index}, ${fIdx}, 'qtd', this.value)">
+                            </div>
+                            <div colspan="2"></div>
+                            <button class="btn-acao-linha btn-del-linha" title="Remover Fracionamento" onclick="removerFracionamento('${nomeSetor}', '${turnoKey}', ${index}, ${fIdx})">✕</button>
+                        </div>
+                    `;
+                });
+            }
         });
 
-        // Atualizar KPIs
-        document.getElementById('kpiPaxTotal').innerText = paxTotalSemana;
-        document.getElementById('kpiTotalDiarias').innerText = totalDiariasExtras;
-        document.getElementById('kpiCustoTotal').innerText = `R$ ${custoTotalExtras.toFixed(2)}`;
+        return html;
+    }
 
-        // Renderizar Tabela Consolidada de Envio
-        const tbodyConsolidado = document.getElementById('tblResumoEnvio').querySelector('tbody');
-        tbodyConsolidado.innerHTML = '';
+    function atualizarCargoProp(nomeSetor, turnoKey, index, prop, valor) {
+        const diaAtivo = dadosSemana[diaAtivoIndex];
+        const cargo = diaAtivo.setores[nomeSetor].cargos[turnoKey][index];
+        cargo[prop] = prop === 'exigido' || prop === 'fixo' ? (parseInt(valor) || 0) : valor;
+        diaAtivo.setores[nomeSetor].definido = true;
+        renderizarSetoresDiaAtivo();
+        verificarEValidadorGeral();
 
-        let resumoArray = [];
+        if (document.getElementById('secaoPedidoValorizado').style.display === 'block') {
+            abrirPedidoValorizado();
+        }
+    }
 
-        Object.values(consolidado).forEach(item => {
-            let stringHorarios = Object.keys(item.entradas)
-                .map(h => `${h}h (${item.entradas[h]})`)
+    function adicionarNovoCargo(nomeSetor, turnoKey) {
+        const diaAtivo = dadosSemana[diaAtivoIndex];
+        const novo = {
+            nome: "Cozinheiro",
+            entrada: HORARIOS_POR_TURNO[turnoKey][0],
+            exigido: 1,
+            fixo: 0,
+            fracionamentos: []
+        };
+        diaAtivo.setores[nomeSetor].cargos[turnoKey].push(novo);
+        diaAtivo.setores[nomeSetor].definido = true;
+        renderizarSetoresDiaAtivo();
+        verificarEValidadorGeral();
+
+        if (document.getElementById('secaoPedidoValorizado').style.display === 'block') {
+            abrirPedidoValorizado();
+        }
+    }
+
+    function removerCargo(nomeSetor, turnoKey, index) {
+        const diaAtivo = dadosSemana[diaAtivoIndex];
+        diaAtivo.setores[nomeSetor].cargos[turnoKey].splice(index, 1);
+        diaAtivo.setores[nomeSetor].definido = true;
+        renderizarSetoresDiaAtivo();
+        verificarEValidadorGeral();
+
+        if (document.getElementById('secaoPedidoValorizado').style.display === 'block') {
+            abrirPedidoValorizado();
+        }
+    }
+
+    function adicionarFracionamento(nomeSetor, turnoKey, cargoIndex) {
+        const diaAtivo = dadosSemana[diaAtivoIndex];
+        const cargo = diaAtivo.setores[nomeSetor].cargos[turnoKey][cargoIndex];
+        if (!cargo.fracionamentos) cargo.fracionamentos = [];
+        cargo.fracionamentos.push({
+            entrada: HORARIOS_POR_TURNO[turnoKey][1] || HORARIOS_POR_TURNO[turnoKey][0],
+            qtd: 1
+        });
+        diaAtivo.setores[nomeSetor].definido = true;
+        renderizarSetoresDiaAtivo();
+        verificarEValidadorGeral();
+
+        if (document.getElementById('secaoPedidoValorizado').style.display === 'block') {
+            abrirPedidoValorizado();
+        }
+    }
+
+    function atualizarFracaoProp(nomeSetor, turnoKey, cargoIndex, fIdx, prop, valor) {
+        const diaAtivo = dadosSemana[diaAtivoIndex];
+        const frac = diaAtivo.setores[nomeSetor].cargos[turnoKey][cargoIndex].fracionamentos[fIdx];
+        frac[prop] = prop === 'qtd' ? (parseInt(valor) || 1) : valor;
+        diaAtivo.setores[nomeSetor].definido = true;
+        renderizarSetoresDiaAtivo();
+        verificarEValidadorGeral();
+
+        if (document.getElementById('secaoPedidoValorizado').style.display === 'block') {
+            abrirPedidoValorizado();
+        }
+    }
+
+    function removerFracionamento(nomeSetor, turnoKey, cargoIndex, fIdx) {
+        const diaAtivo = dadosSemana[diaAtivoIndex];
+        diaAtivo.setores[nomeSetor].cargos[turnoKey][cargoIndex].fracionamentos.splice(fIdx, 1);
+        diaAtivo.setores[nomeSetor].definido = true;
+        renderizarSetoresDiaAtivo();
+        verificarEValidadorGeral();
+
+        if (document.getElementById('secaoPedidoValorizado').style.display === 'block') {
+            abrirPedidoValorizado();
+        }
+    }
+
+    function verificarEValidadorGeral() {
+        const diaAtivo = dadosSemana[diaAtivoIndex];
+        let todosDefinidos = true;
+
+        Object.keys(diaAtivo.setores).forEach(nomeSetor => {
+            if (!diaAtivo.setores[nomeSetor].definido) {
+                todosDefinidos = false;
+            }
+        });
+
+        const btn = document.getElementById('btnGerarRelatorio');
+        if (todosDefinidos) {
+            btn.disabled = false;
+            btn.className = "btn-gerar-relatorio liberado";
+            btn.innerHTML = "🔓 Liberar Pedido Valorizado do Dia";
+        } else {
+            btn.disabled = true;
+            btn.className = "btn-gerar-relatorio";
+            btn.innerHTML = "🔒 Sinalize todos os locais para liberar o pedido";
+        }
+    }
+
+    function alternarSubTab(tab) {
+        document.getElementById('subTabResumo').className = `btn-subtab ${tab === 'resumo' ? 'ativa' : ''}`;
+        document.getElementById('subTabDetalhamento').className = `btn-subtab ${tab === 'detalhamento' ? 'ativa' : ''}`;
+        
+        document.getElementById('conteudoSubTabResumo').style.display = tab === 'resumo' ? 'block' : 'none';
+        document.getElementById('conteudoSubTabDetalhamento').style.display = tab === 'detalhamento' ? 'block' : 'none';
+    }
+
+    function abrirPedidoValorizado() {
+        const diaAtivo = dadosSemana[diaAtivoIndex];
+        const resumoMap = {};
+        const detalhamentoList = [];
+
+        let totalQtdExtras = 0;
+        let totalCustoGeral = 0;
+
+        Object.keys(diaAtivo.setores).forEach(nomeSetor => {
+            const setor = diaAtivo.setores[nomeSetor];
+            if (setor.operando) {
+                ['manha', 'tarde', 'madrugada'].forEach(turnoKey => {
+                    if (setor.turnosAtivos[turnoKey] && setor.cargos[turnoKey]) {
+                        setor.cargos[turnoKey].forEach(cargo => {
+                            const valorDiaria = VALORES_PADRAO_DIARIA[cargo.nome] || 150.00;
+                            const somaFracionamentos = (cargo.fracionamentos || []).reduce((acc, f) => acc + (parseInt(f.qtd) || 0), 0);
+                            const extraBase = Math.max(0, cargo.exigido - cargo.fixo - somaFracionamentos);
+
+                            if (extraBase > 0) {
+                                totalQtdExtras += extraBase;
+                                const sub = extraBase * valorDiaria;
+                                totalCustoGeral += sub;
+
+                                detalhamentoList.push({
+                                    setor: nomeSetor,
+                                    turno: NOME_TURNO_LABEL[turnoKey],
+                                    cargo: cargo.nome,
+                                    qtd: extraBase,
+                                    entrada: cargo.entrada,
+                                    valorDiaria,
+                                    subtotal: sub
+                                });
+
+                                const keyRes = `${cargo.nome}_${turnoKey}`;
+                                if (!resumoMap[keyRes]) {
+                                    resumoMap[keyRes] = {
+                                        cargo: cargo.nome,
+                                        turno: NOME_TURNO_LABEL[turnoKey],
+                                        horariosContagem: {},
+                                        qtd: 0,
+                                        valorDiaria,
+                                        subtotal: 0
+                                    };
+                                }
+                                resumoMap[keyRes].qtd += extraBase;
+                                resumoMap[keyRes].horariosContagem[cargo.entrada] = (resumoMap[keyRes].horariosContagem[cargo.entrada] || 0) + extraBase;
+                                resumoMap[keyRes].subtotal += sub;
+                            }
+
+                            if (cargo.fracionamentos) {
+                                cargo.fracionamentos.forEach(frac => {
+                                    if (frac.qtd > 0) {
+                                        totalQtdExtras += frac.qtd;
+                                        const subFrac = frac.qtd * valorDiaria;
+                                        totalCustoGeral += subFrac;
+
+                                        detalhamentoList.push({
+                                            setor: nomeSetor,
+                                            turno: NOME_TURNO_LABEL[turnoKey],
+                                            cargo: cargo.nome,
+                                            qtd: frac.qtd,
+                                            entrada: frac.entrada,
+                                            valorDiaria,
+                                            subtotal: subFrac
+                                        });
+
+                                        const keyRes = `${cargo.nome}_${turnoKey}`;
+                                        if (!resumoMap[keyRes]) {
+                                            resumoMap[keyRes] = {
+                                                cargo: cargo.nome,
+                                                turno: NOME_TURNO_LABEL[turnoKey],
+                                                horariosContagem: {},
+                                                qtd: 0,
+                                                valorDiaria,
+                                                subtotal: 0
+                                            };
+                                        }
+                                        resumoMap[keyRes].qtd += frac.qtd;
+                                        resumoMap[keyRes].horariosContagem[frac.entrada] = (resumoMap[keyRes].horariosContagem[frac.entrada] || 0) + frac.qtd;
+                                        resumoMap[keyRes].subtotal += subFrac;
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        });
+
+        const listaResumoFinal = Object.values(resumoMap).map(item => {
+            const horariosFormatados = Object.entries(item.horariosContagem)
+                .sort(([h1], [h2]) => h1.localeCompare(h2))
+                .map(([horario, q]) => `${horario} (${q}x)`)
                 .join(', ');
-
-            resumoArray.push({
+            return {
                 cargo: item.cargo,
                 turno: item.turno,
-                horariosTexto: stringHorarios,
-                qtd: item.qtdTotal,
-                valorDiaria: valoresCargos[item.cargo] || 0,
+                horariosTexto: horariosFormatados,
+                qtd: item.qtd,
+                valorDiaria: item.valorDiaria,
                 subtotal: item.subtotal
-            });
+            };
+        });
 
+        relatorioAtualDados = {
+            resumo: listaResumoFinal,
+            detalhamento: detalhamentoList,
+            totalQtdExtras,
+            totalCustoGeral
+        };
+
+        renderizarTabelasRelatorio(relatorioAtualDados);
+
+        document.getElementById('secaoPedidoValorizado').style.display = 'block';
+        document.getElementById('secaoPedidoValorizado').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function renderizarTabelasRelatorio(dados) {
+        const tbodyRes = document.getElementById('corpoTabelaValores');
+        tbodyRes.innerHTML = "";
+        dados.resumo.forEach(item => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td><strong>${item.cargo}</strong></td>
                 <td>${item.turno}</td>
-                <td>${stringHorarios}</td>
-                <td><strong>${item.qtdTotal}</strong></td>
-                <td>R$ ${(valoresCargos[item.cargo] || 0).toFixed(2)}</td>
+                <td>${item.horariosTexto}</td>
+                <td><strong>${item.qtd}</strong></td>
+                <td>R$ ${item.valorDiaria.toFixed(2)}</td>
                 <td><strong>R$ ${item.subtotal.toFixed(2)}</strong></td>
             `;
-            tbodyConsolidado.appendChild(tr);
+            tbodyRes.appendChild(tr);
         });
 
-        // Renderizar Tabela Detalhada por Setor
-        const tbodyDetalhes = document.getElementById('tblDetalhamentoSetor').querySelector('tbody');
-        tbodyDetalhes.innerHTML = '';
-
-        detalhamento.forEach(item => {
+        const tbodyDet = document.getElementById('corpoTabelaDetalhamento');
+        tbodyDet.innerHTML = "";
+        dados.detalhamento.forEach(item => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${item.setor}</td>
                 <td>${item.turno}</td>
-                <td>${item.cargo}</td>
-                <td>${item.qtd}</td>
+                <td><strong>${item.cargo}</strong></td>
+                <td><strong>${item.qtd}</strong></td>
                 <td>${item.entrada}</td>
                 <td>R$ ${item.valorDiaria.toFixed(2)}</td>
-                <td>R$ ${item.subtotal.toFixed(2)}</td>
+                <td><strong>R$ ${item.subtotal.toFixed(2)}</strong></td>
             `;
-            tbodyDetalhes.appendChild(tr);
+            tbodyDet.appendChild(tr);
         });
 
-        // Guardar Estado do Relatório Atual para exportações
-        relatorioAtualDados = {
-            totalQtdExtras: totalDiariasExtras,
-            totalCustoGeral: custoTotalExtras,
-            resumo: resumoArray,
-            detalhamento: detalhamento
-        };
+        document.getElementById('lblTotalExtrasQtde').innerText = dados.totalQtdExtras;
+        document.getElementById('lblTotalCustoReais').innerText = dados.totalCustoGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
-
-    /* ==========================================================================
-       CONFIGURAÇÃO E PARÂMETROS
-       ========================================================================== */
-
-    function renderizarTabelaValoresCargos() {
-        const tbody = document.getElementById('tblValoresCargos').querySelector('tbody');
-        tbody.innerHTML = '';
-
-        Object.keys(valoresCargos).forEach(cargo => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${cargo}</td>
-                <td><input type="number" step="0.01" value="${valoresCargos[cargo]}" onchange="atualizarValorDiariaCargo('${cargo}', this.value)"></td>
-            `;
-            tbody.appendChild(tr);
-        });
-    }
-
-    function atualizarValorDiariaCargo(cargo, val) {
-        valoresCargos[cargo] = parseFloat(val) || 0;
-        calcularEAtualizarRelatorioDia();
-    }
-
-    function salvarParametros() {
-        localStorage.setItem('valoresCargos_bourbon', JSON.stringify(valoresCargos));
-        alert('Parâmetros salvos com sucesso!');
-    }
-
-    function carregarParametrosSalvos() {
-        const salvos = localStorage.getItem('valoresCargos_bourbon');
-        if (salvos) {
-            valoresCargos = JSON.parse(salvos);
-        }
-    }
-
-    /* ==========================================================================
-       HISTÓRICO E EXPORTAÇÃO
-       ========================================================================== */
 
     function gravarPedidoAtual() {
         if (!relatorioAtualDados.resumo || relatorioAtualDados.resumo.length === 0) {
@@ -964,7 +1646,7 @@
         const diaAtivo = dadosSemana[diaAtivoIndex];
         const pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
         
-        const novoPedido = {
+        const novopedido = {
             id: Date.now(),
             data: diaAtivo.data,
             diaNome: diaAtivo.diaNome,
@@ -974,63 +1656,107 @@
             detalhamento: relatorioAtualDados.detalhamento
         };
 
-        // Salva Localmente
-        pedidos.push(novoPedido);
+        pedidos.push(novopedido);
         localStorage.setItem('pedidos_bourbon', JSON.stringify(pedidos));
-
-        // Salva no Firebase Realtime Database (Nuvem)
-        if (typeof window.salvarNoFirebase === 'function') {
-            window.salvarNoFirebase(novoPedido);
-        }
-
-        renderizarHistorico();
-        alert('Pedido gravado com sucesso no Histórico e sincronizado na Nuvem!');
+        alert('Pedido gravado com sucesso no Histórico!');
     }
 
-    function renderizarHistorico() {
-        const tbody = document.getElementById('tblHistorico').querySelector('tbody');
-        tbody.innerHTML = '';
-
+    function abrirModalHistorico() {
+        const modal = document.getElementById('modalHistorico');
+        const container = document.getElementById('conteudoHistoricoModal');
         const pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
 
-        pedidos.forEach(p => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${p.data}</td>
-                <td>${p.diaNome}</td>
-                <td>${p.qtdExtras}</td>
-                <td>R$ ${p.custoTotal.toFixed(2)}</td>
-                <td>
-                    <button class="btn" style="padding:4px 8px; font-size:11px;" onclick="exportarExcelPedidoSalvo(${p.id})">Exportar CSV</button>
-                </td>
+        if (pedidos.length === 0) {
+            container.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:20px;">Nenhum pedido gravado anteriormente.</p>`;
+        } else {
+            let html = `
+                <table class="tabela-custom">
+                    <thead>
+                        <tr>
+                            <th>Data Operação</th>
+                            <th>Dia</th>
+                            <th>Qtd Extras</th>
+                            <th>Custo Total</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
             `;
-            tbody.appendChild(tr);
-        });
-    }
-
-    function exportarExcel() {
-        if (!relatorioAtualDados.resumo || relatorioAtualDados.resumo.length === 0) {
-            alert('Não há dados para exportar!');
-            return;
+            pedidos.forEach((p, index) => {
+                const valorFormatado = typeof p.custoTotal === 'number' 
+                    ? p.custoTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2}) 
+                    : p.custoTotal;
+                html += `
+                    <tr>
+                        <td><strong>${p.data}</strong></td>
+                        <td>${p.diaNome}</td>
+                        <td>${p.qtdExtras} pax</td>
+                        <td>R$ ${valorFormatado}</td>
+                        <td>
+                            <button class="btn-tbl-acao btn-tbl-ver" onclick="visualizarPedidoSalvo(${p.id})">👁️ Ver</button>
+                            <button class="btn-tbl-acao btn-tbl-excel" onclick="exportarExcelPedidoSalvo(${p.id})">📊 Excel</button>
+                            <button class="btn-tbl-acao btn-tbl-del" onclick="excluirPedidoSalvo(${index})">🗑️ Excluir</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            html += `</tbody></table>`;
+            container.innerHTML = html;
         }
 
-        let csvContent = "data:text/csv;charset=utf-8,Cargo / Funcao;Turno;Horario(s) Entrada (Qtd);Qtd Extras;Valor Diaria (RS);Subtotal (RS)\n";
+        modal.style.display = 'flex';
+    }
 
+    function fecharModalHistorico() {
+        document.getElementById('modalHistorico').style.display = 'none';
+    }
+
+    function visualizarPedidoSalvo(id) {
+        const pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
+        const ped = pedidos.find(p => p.id === id);
+        if (!ped) return;
+
+        if (ped.resumo && ped.detalhamento) {
+            relatorioAtualDados = {
+                resumo: ped.resumo,
+                detalhamento: ped.detalhamento,
+                totalQtdExtras: ped.qtdExtras,
+                totalCustoGeral: typeof ped.custoTotal === 'number' ? ped.custoTotal : parseFloat(ped.custoTotal.replace('.', '').replace(',', '.')) || 0
+            };
+            renderizarTabelasRelatorio(relatorioAtualDados);
+        }
+
+        fecharModalHistorico();
+        document.getElementById('secaoPedidoValorizado').style.display = 'block';
+        document.getElementById('secaoPedidoValorizado').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function excluirPedidoSalvo(index) {
+        if (confirm("Tem certeza que deseja excluir este registro do histórico?")) {
+            let pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
+            pedidos.splice(index, 1);
+            localStorage.setItem('pedidos_bourbon', JSON.stringify(pedidos));
+            abrirModalHistorico();
+        }
+    }
+
+    function exportarExcelPedidoAtual() {
+        const dataStr = dadosSemana[diaAtivoIndex].data;
+        let csvContent = "data:text/csv;charset=utf-8,Cargo / Funcao;Turno;Horario(s) Entrada (Qtd);Qtd Extras;Valor Diaria (RS);Subtotal (RS)\n";
+        
         relatorioAtualDados.resumo.forEach(item => {
             csvContent += `"${item.cargo}";"${item.turno}";"${item.horariosTexto}";"${item.qtd}";"R$ ${item.valorDiaria.toFixed(2)}";"R$ ${item.subtotal.toFixed(2)}"\n`;
         });
 
         csvContent += `\n\nDETALHAMENTO POR LOCAL\nLocal;Turno;Cargo / Funcao;Qtd Extras;Entrada;Valor Diaria (RS);Subtotal (RS)\n`;
-        
         relatorioAtualDados.detalhamento.forEach(item => {
             csvContent += `"${item.setor}";"${item.turno}";"${item.cargo}";"${item.qtd}";"${item.entrada}";"R$ ${item.valorDiaria.toFixed(2)}";"R$ ${item.subtotal.toFixed(2)}"\n`;
         });
 
-        const diaAtivo = dadosSemana[diaAtivoIndex];
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `Solicitacao_Extras_${diaAtivo.diaNome}_${diaAtivo.data}.csv`);
+        link.setAttribute("download", `Pedido_A&B_Completo_${dataStr}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -1055,7 +1781,11 @@
                 csvContent += `"${item.setor}";"${item.turno}";"${item.cargo}";"${item.qtd}";"${item.entrada}";"R$ ${item.valorDiaria.toFixed(2)}";"R$ ${item.subtotal.toFixed(2)}"\n`;
             });
         }
+        }
 
+        // Exemplo de como deve ficar dentro da sua função gravarPedidoAtual:
+        window.salvarNoFirebase(novoPedido);
+        
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
@@ -1063,14 +1793,13 @@
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-    }
+              
 </script>
+<!-- BANCO DE DADOS FIREBASE -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-<!-- INTEGRACAO E SINCRONIZACAO BANCO DE DADOS FIREBASE REALTIME -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
-<script>
+  <script>
     // Configuração do Firebase
     var firebaseConfig = {
       apiKey: "AIzaSyAQyjjVt13sfYHdjXZr2fZM_4QEBVEwHUQ",
@@ -1088,7 +1817,16 @@
     }
     var database = firebase.database();
 
-    // Função global para salvar no banco de dados na nuvem
+    // Função global para salvar no banco
+    window.salvarNoFirebase = function(dados) {
+      database.ref('historico_pedidos').push({
+        ...dados,
+        dataRegistro: new Date().toLocaleString("pt-BR")
+      }).then(function() {
+        console.log("Dados gravados com sucesso na nuvem!");
+      }).catch(function(err) {
+        console.error("Erro ao salvar no banco:", err);
+      });// Função global para salvar no banco
     window.salvarNoFirebase = function(dados) {
       database.ref('historico_pedidos').push({
         ...dados,
@@ -1100,19 +1838,20 @@
       });
     };
 
-    // LER DADOS DA NUVEM EM TEMPO REAL E ATUALIZAR O HISTÓRICO LOCAL
+  // LER DADOS DA NUVEM EM TEMPO REAL E ATUALIZAR O HISTÓRICO LOCAL
     database.ref('historico_pedidos').on('value', function(snapshot) {
       var dadosDoFirebase = snapshot.val();
       if (dadosDoFirebase) {
         var listaPedidos = Object.values(dadosDoFirebase);
-        localStorage.setItem('pedidos_bourbon', JSON.stringify(listaPedidos));
-        if (typeof renderizarHistorico === 'function') {
-          renderizarHistorico();
-        }
+        // Atualiza a chave padrao de historico do navegador
+        localStorage.setItem('historico_pedidos', JSON.stringify(listaPedidos));
+        localStorage.setItem('pedidos_salvos', JSON.stringify(listaPedidos));
         console.log("Histórico sincronizado com sucesso da nuvem!");
       }
     });
-</script>
+  <script>
+ 
+
 
 </body>
 </html>
