@@ -1838,16 +1838,17 @@
       });
     };
 
-    // LER DADOS DA NUVEM EM TEMPO REAL
+  // LER DADOS DA NUVEM EM TEMPO REAL E SALVAR NO LOCALSTORAGE
     database.ref('historico_pedidos').on('value', function(snapshot) {
       var dadosDoFirebase = snapshot.val();
-      console.log("Histórico vindo da nuvem:", dadosDoFirebase);
-
-      if (dadosDoFirebase && typeof renderizarHistorico === "function") {
-        renderizarHistorico(Object.values(dadosDoFirebase));
+      if (dadosDoFirebase) {
+        // Converte os pedidos do Firebase e atualiza o armazenamento local da página
+        var listaPedidos = Object.values(dadosDoFirebase);
+        localStorage.setItem('historico_pedidos', JSON.stringify(listaPedidos));
+        console.log("Histórico sincronizado com a nuvem com sucesso!");
       }
     });
-  </script>
+  <script>
  
 
 
