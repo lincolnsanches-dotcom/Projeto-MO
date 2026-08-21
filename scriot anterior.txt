@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Master Dinâmico A&B - Bourbon V5.3</title>
+    <style>
+        :root {
+            --primary: #005a36;       
+            --primary-light: #e6f0ec; 
+            --accent: #0d9488;        
+            --success: #10b981;       
+            --text-main: #1f2937;     
+            --text-muted: #64748b;    
+            --bg-body: #f1f5f9;       
+            --border: #cbd5e1;        
+            --danger: #ef4444;
+            --danger-light: #fef2f2;
+            --warning: #f59e0b;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border);
+        }
+
+        .header {
+            border-bottom: 2px solid var(--primary-light);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h2 { color: var(--primary); margin: 0 0 5px 0; font-size: 22px; font-weight: 700; }
+        .header p { color: var(--text-muted); margin: 0; font-size: 13px; }
+
+        .painel-progresso {
+            background: var(--primary-light);
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 25px;
+        }
+
+        .progresso-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .bar-container {
+            width: 100%;
+            background-color: #cbd5e1;
+            height: 16px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            width: 0%;
+            background-color: var(--primary);
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+
+        .topo-card {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 25px;
+        }
+
+        .form-grid-topo {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .campo { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+        label { font-weight: 600; font-size: 11px; color: var(--text-main); text-transform: uppercase; }
+        
+        input, select, textarea {
+            padding: 8px 10px;
+            border: 1.5px solid var(--border);
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            width: 100%;
+            background-color: white;
+            height: 38px;
+        }
+
+        input[readonly] {
+            background-color: #f1f5f9;
+            color: #334155;
+            font-weight: bold;
+        }
+
+        .grupo-titulo {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            margin: 20px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 2px solid var(--primary-light);
+        }
+
+        .card-setor {
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: #ffffff;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .card-setor.fechado {
+            background-color: #f8fafc;
+            border-color: #e2e8f0;
+            opacity: 0.75;
+        }
+
+        .card-setor.operando {
+            border-color: var(--primary);
+            box-shadow: 0 2px 8px rgba(0,90,54,0.08);
+        }
+
+        .setor-header {
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffffff;
+        }
+
+        .setor-nome {
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #94a3b8;
+        }
+
+        .status-dot.verde { background-color: var(--success); }
+        .status-dot.vermelho { background-color: var(--danger); }
+
+        .toggle-status {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-status {
+            border: 1px solid var(--border);
+            background: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-status.op-sim:hover, .btn-status.op-sim.ativo {
+            background-color: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .btn-status.op-nao:hover, .btn-status.op-nao.ativo {
+            background-color: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+
+        .setor-corpo {
+            display: none;
+            padding: 15px;
+            border-top: 1px solid var(--border);
+            background-color: #fafafa;
+        }
+
+        .grid-cargos {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr 1fr 1fr 1fr;
+            gap: 10px;
+            background: white;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+
+        .badge-extra {
+            background-color: #dcfce7;
+            color: #15803d;
+            font-weight: bold;
+            padding: 6px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .btn-group-acoes {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        .btn-primary { 
+            background-color: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 14px 25px; 
+            border-radius: 6px; 
+            font-weight: 700; 
+            cursor: pointer;
+            width: 100%;
+            font-size: 15px;
+        }
+        
+        .btn-primary:disabled {
+            background-color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary { 
+            background-color: #f1f5f9; 
+            color: var(--text-muted); 
+            border: 1px solid var(--border); 
+            padding: 10px 18px; 
+            border-radius: 6px; 
+            font-weight: 700; 
+            cursor: pointer;
+        }
+
+        .btn-action-sm {
+            padding: 4px 8px;
+            font-size: 11px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            background: white;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* ESTILOS DO RELATÓRIO E ABAS */
+        .resultado-box {
+            display: none; border: 1.5px solid var(--border); border-radius: 8px;
+            overflow: hidden; background: #ffffff; margin-top: 30px; width: 100%;
+        }
+        .resultado-header {
+            background-color: var(--primary-light); padding: 15px;
+            border-bottom: 1.5px solid var(--border); display: flex;
+            justify-content: space-between; align-items: center;
+        }
+        .resultado-header h3 { margin: 0; color: var(--primary); font-size: 15px; }
+
+        .nav-tabs {
+            display: flex;
+            background: #f8fafc;
+            border-bottom: 1px solid var(--border);
+            padding: 5px 15px 0 15px;
+            gap: 10px;
+        }
+
+        .tab-btn {
+            padding: 10px 18px;
+            font-size: 12px;
+            font-weight: 700;
+            border: 1px solid transparent;
+            border-bottom: none;
+            border-radius: 6px 6px 0 0;
+            cursor: pointer;
+            background: transparent;
+            color: var(--text-muted);
+        }
+
+        .tab-btn.active {
+            background: white;
+            border-color: var(--border);
+            color: var(--primary);
+            border-bottom: 2px solid white;
+            margin-bottom: -1px;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .tabela-escala { width: 100%; border-collapse: collapse; text-align: left; }
+        .tabela-escala th { background-color: #f8fafc; color: var(--text-muted); font-weight: 600; font-size: 11px; text-transform: uppercase; padding: 10px; border-bottom: 1px solid var(--border); }
+        .tabela-escala td { padding: 10px; font-size: 12px; border-bottom: 1px solid var(--border); color: var(--text-main); }
+        
+        .total-row { background-color: #f0fdf4; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid var(--border); }
+
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); z-index: 1000; align-items: center; justify-content: center;
+        }
+        .modal-conteudo {
+            background: white; width: 95%; max-width: 950px; border-radius: 12px; padding: 25px; max-height: 85vh; overflow-y: auto; position: relative;
+        }
+        .fechar-modal { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: var(--text-muted); }
+
+        @media print {
+            .painel-progresso, .btn-group-acoes, .toggle-status, #btnVerHistorico, .nav-tabs { display: none !important; }
+            body { padding: 0; background: white; }
+            .container { box-shadow: none; border: none; max-width: 100%; }
+            .resultado-box { display: block !important; border: 1px solid #000; }
+            .tab-content { display: none !important; }
+            .tab-content.active { display: block !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div>
+            <h2>🏢 Check-in Diário de Mão de Obra A&B</h2>
+            <p>Validação dos 30 Setores e Dimensionamento Automático de Extras</p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <button class="btn-secondary" id="btnVerHistorico" onclick="abrirHistorico()">📜 Histórico</button>
+            <div style="font-family: 'Georgia', serif; font-size: 18px; font-weight: bold; color: #005a36; border-left: 3px solid #005a36; padding-left: 12px;">
+                BOURBON
+            </div>
+        </div>
+    </div>
+
+    <!-- PAINEL DE PROGRESSO -->
+    <div class="painel-progresso">
+        <div class="progresso-info">
+            <span>Status da Revisão Diária:</span>
+            <span id="txtProgresso">0 / 30 Setores Revisados (0%)</span>
+        </div>
+        <div class="bar-container">
+            <div class="bar-fill" id="barFill"></div>
+        </div>
+    </div>
+
+    <!-- DADOS GERAIS -->
+    <div class="topo-card">
+        <div class="form-grid-topo">
+            <div class="campo">
+                <label for="dataEscala">Data da Operação:</label>
+                <input type="date" id="dataEscala">
+            </div>
+            <div class="campo">
+                <label for="adultosGeral">Ocupação (Adultos):</label>
+                <input type="number" id="adultosGeral" value="500" min="0" oninput="recalcularTodosOsSetores()">
+            </div>
+            <div class="campo">
+                <label for="criancasGeral">Ocupação (Crianças):</label>
+                <input type="number" id="criancasGeral" value="0" min="0" oninput="recalcularTodosOsSetores()">
+            </div>
+        </div>
+    </div>
+
+    <!-- LISTA DOS 30 SETORES -->
+    <div id="containerSetores"></div>
+
+    <div class="btn-group-acoes">
+        <button class="btn-primary" id="btnCalcular" disabled onclick="calcularEPolarizar()">⚡ Processar Solicitação para o RH (100% Concluído)</button>
+    </div>
+
+    <!-- RELATÓRIO FINAL COM NAVEGAÇÃO POR ABAS -->
+    <div id="resultadoBox" class="resultado-box">
+        <div class="resultado-header">
+            <h3>SOLICITAÇÃO DE MÃO DE OBRA EXTRA</h3>
+            <span id="labelDataConsolidada" style="font-weight: bold; color: var(--primary); font-size: 12px;"></span>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="tab-btn active" id="tabBtnConsolidado" onclick="trocarAba('consolidado')">📊 Resumo Consolidado (Função/Turno)</button>
+            <button class="tab-btn" id="tabBtnDetalhado" onclick="trocarAba('detalhado')">📋 Detalhado por Setor</button>
+        </div>
+
+        <!-- TAB 1: RESUMO CONSOLIDADO -->
+        <div id="tabConsolidado" class="tab-content active">
+            <table class="tabela-escala">
+                <thead>
+                    <tr>
+                        <th>Mão de Obra</th>
+                        <th style="text-align: center;">Horário / Turno</th>
+                        <th style="text-align: center;">Total Solicitado</th>
+                        <th style="text-align: right;">Valor Unit.</th>
+                        <th style="text-align: right;">Custo Acumulado</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaCorpoConsolidado"></tbody>
+            </table>
+        </div>
+
+        <!-- TAB 2: DETALHADO POR SETOR -->
+        <div id="tabDetalhado" class="tab-content">
+            <table class="tabela-escala">
+                <thead>
+                    <tr>
+                        <th>Setor</th>
+                        <th>Mão de Obra</th>
+                        <th style="text-align: center;">Horário</th>
+                        <th style="text-align: center;">Qtd Extra</th>
+                        <th style="text-align: right;">Valor Unit.</th>
+                        <th style="text-align: right;">Total</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaCorpoDetalhado"></tbody>
+            </table>
+        </div>
+
+        <div class="total-row">
+            <span style="font-weight: 700; color: var(--primary);">CUSTO TOTAL DE EXTRAS SOLICITADOS:</span>
+            <span style="font-size: 20px; font-weight: 800; color: var(--success);" id="custoTotalGeral">R$ 0,00</span>
+        </div>
+        <div style="padding: 15px; text-align: right; background: #ffffff;">
+            <button class="btn-secondary" onclick="salvarNoHistorico()">💾 Salvar no Histórico & Enviar</button>
+            <button class="btn-secondary" onclick="window.print()">🖨️ Imprimir Visão Atual</button>
+        </div>
+    </div>
+</div>
+
+<div id="modalHistorico" class="modal">
+    <div class="modal-conteudo">
+        <span class="fechar-modal" onclick="fecharHistorico()">&times;</span>
+        <h3 style="color: var(--primary); margin-top:0;">📜 Histórico de Solicitações Salvas</h3>
+        <table class="tabela-escala" style="margin-top: 15px;">
+            <thead>
+                <tr>
+                    <th>Data Envio</th>
+                    <th>Data Operação</th>
+                    <th>Custo Total</th>
+                    <th>Resumo</th>
+                    <th style="text-align: center;">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="tabelaHistoricoCorpo"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.getElementById('dataEscala').valueAsDate = new Date();
+
+    const HORARIOS = ["06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "22:00"];
+
+    const BLOCOS_SETORES = [
+        {
+            titulo: "🏢 Restaurantes & Pontos de Venda (PDVs)",
+            setores: ["RESTAURANTE TOM", "RESTAURANTE VEZZOSO", "RESTAURANTE CAVE", "CAFÉ DA MANHA TOM", "CAFÉ DA MANHA VEZZOSO", "CHURRASQUEIRA TOM", "SPORT PARK", "ACQUA KIDS", "PIZZARIA"]
+        },
+        {
+            titulo: "☕ Eventos, Serviços & Apoio",
+            setores: ["BANQUETES", "ROOM SERVICE", "RESTRIÇÃO", "CARREGADOR"]
+        },
+        {
+            titulo: "👨‍🍳 Produção & Pré-Preparo (Cozinha Central)",
+            setores: ["COZINHA QUENTE", "GARDE MANGER", "CONFEITARIA", "AÇOUGUE", "LEGUMERIA", "PADARIA MANHÃ", "PADARIA TARDE", "PADARIA MADRUGADA", "CAFÉ DA MANHÃ MADRUGADA"]
+        },
+        {
+            titulo: "🍽️ Alimentação Interna (Refeitório & Time)",
+            setores: ["REFEITORIO", "REFEITÓRIO TARDE", "BUFFET TIME", "CAFÉ DA MANHA TIME", "JANTAR TIME", "CEIA TIME", "LANCHE TARDE TIME"]
+        },
+        {
+            titulo: "👔 Setores Especiais",
+            setores: ["VEZZOSO"]
+        }
+    ];
+
+    const CARGOS_CONFIG = [
+        { nome: "Cozinheiro Extra", valor: 317.79, divisorPax: 50, minimo: 1 },
+        { nome: "Auxiliar / Garçom Extra", valor: 220.00, divisorPax: 35, minimo: 1 },
+        { nome: "Steward Extra", valor: 200.00, divisorPax: 80, minimo: 1 },
+        { nome: "Líder Extra", valor: 327.73, divisorPax: 0, fixoPadrao: 1 }
+    ];
+
+    let estadoSetores = {};
+    let totalSetoresCount = 0;
+    let dadosUltimoCalculo = null; 
+
+    window.onload = function() {
+        renderizarTodosSetores();
+    };
+
+    function getPaxTotal() {
+        const ad = parseInt(document.getElementById('adultosGeral').value) || 0;
+        const cr = parseInt(document.getElementById('criancasGeral').value) || 0;
+        return ad + cr;
+    }
+
+    function renderizarTodosSetores() {
+        const container = document.getElementById('containerSetores');
+        container.innerHTML = "";
+        totalSetoresCount = 0;
+
+        BLOCOS_SETORES.forEach(bloco => {
+            const divGrupo = document.createElement('div');
+            divGrupo.className = 'grupo-titulo';
+            divGrupo.innerText = bloco.titulo;
+            container.appendChild(divGrupo);
+
+            bloco.setores.forEach(setor => {
+                totalSetoresCount++;
+                estadoSetores[setor] = null;
+
+                const card = document.createElement('div');
+                card.className = 'card-setor';
+                card.id = `card_${limparId(setor)}`;
+
+                card.innerHTML = `
+                    <div class="setor-header">
+                        <div class="setor-nome">
+                            <div class="status-dot" id="dot_${limparId(setor)}"></div>
+                            <span>${setor}</span>
+                        </div>
+                        <div class="toggle-status">
+                            <button class="btn-status op-nao" id="btn_nao_${limparId(setor)}" onclick="definirStatusSetor('${setor}', false)">🔴 Não Operando</button>
+                            <button class="btn-status op-sim" id="btn_sim_${limparId(setor)}" onclick="definirStatusSetor('${setor}', true)">🟢 Em Operação</button>
+                        </div>
+                    </div>
+                    <div class="setor-corpo" id="corpo_${limparId(setor)}">
+                        ${gerarCamposCargosHTML(setor)}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        });
+
+        atualizarBarraProgresso();
+    }
+
+    function limparId(nome) {
+        return nome.replace(/[^a-zA-Z0-0]/g, '_');
+    }
+
+    function gerarCamposCargosHTML(setor) {
+        let html = `<div style="font-size:11px; font-weight:bold; color:var(--text-muted); margin-bottom:10px;">DIMENSIONAMENTO AUTOMÁTICO DE MÃO DE OBRA - ${setor}:</div>`;
+        const pax = getPaxTotal();
+
+        CARGOS_CONFIG.forEach((cargo, idx) => {
+            let necessarios = 0;
+            if (cargo.divisorPax > 0) {
+                necessarios = Math.max(cargo.minimo, Math.ceil(pax / cargo.divisorPax));
+            } else {
+                necessarios = cargo.fixoPadrao || 1;
+            }
+
+            html += `
+                <div class="grid-cargos" id="grid_${limparId(setor)}_${idx}">
+                    <span style="font-weight:600; font-size:12px;">${cargo.nome}</span>
+                    <div class="campo">
+                        <label>Qtd. Necessária</label>
+                        <input type="number" class="input-necessario" value="${necessarios}" readonly>
+                    </div>
+                    <div class="campo">
+                        <label>Fixo Casa</label>
+                        <input type="number" class="input-fixo" value="0" min="0" oninput="calcularLinhaAuto('${setor}', ${idx})">
+                    </div>
+                    <div class="campo">
+                        <label>Extra Sugerido</label>
+                        <div class="badge-extra badge-calc">+${necessarios}</div>
+                    </div>
+                    <div class="campo">
+                        <label>Horário Entrada</label>
+                        <select class="select-hora">
+                            ${HORARIOS.map(h => `<option value="${h}" ${h==='07:00'?'selected':''}>${h}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+            `;
+        });
+
+        return html;
+    }
+
+    function calcularLinhaAuto(setor, cargoIdx) {
+        const idClean = limparId(setor);
+        const grid = document.getElementById(`grid_${idClean}_${cargoIdx}`);
+        if (!grid) return;
+
+        const necessarios = parseInt(grid.querySelector('.input-necessario').value) || 0;
+        const fixo = parseInt(grid.querySelector('.input-fixo').value) || 0;
+
+        const extra = Math.max(0, necessarios - fixo);
+        grid.querySelector('.badge-calc').innerText = `+${extra}`;
+    }
+
+    function recalcularTodosOsSetores() {
+        const pax = getPaxTotal();
+        Object.keys(estadoSetores).forEach(setor => {
+            const idClean = limparId(setor);
+            CARGOS_CONFIG.forEach((cargo, idx) => {
+                const grid = document.getElementById(`grid_${idClean}_${idx}`);
+                if (grid) {
+                    let necessarios = 0;
+                    if (cargo.divisorPax > 0) {
+                        necessarios = Math.max(cargo.minimo, Math.ceil(pax / cargo.divisorPax));
+                    } else {
+                        necessarios = cargo.fixoPadrao || 1;
+                    }
+
+                    grid.querySelector('.input-necessario').value = necessarios;
+                    calcularLinhaAuto(setor, idx);
+                }
+            });
+        });
+    }
+
+    function definirStatusSetor(setor, operando) {
+        const idClean = limparId(setor);
+        const card = document.getElementById(`card_${idClean}`);
+        const corpo = document.getElementById(`corpo_${idClean}`);
+        const dot = document.getElementById(`dot_${idClean}`);
+        const btnSim = document.getElementById(`btn_sim_${idClean}`);
+        const btnNao = document.getElementById(`btn_nao_${idClean}`);
+
+        if (operando) {
+            estadoSetores[setor] = 'operando';
+            card.className = 'card-setor operando';
+            corpo.style.display = 'block';
+            dot.className = 'status-dot verde';
+            btnSim.classList.add('ativo');
+            btnNao.classList.remove('ativo');
+            
+            CARGOS_CONFIG.forEach((_, idx) => calcularLinhaAuto(setor, idx));
+        } else {
+            estadoSetores[setor] = 'fechado';
+            card.className = 'card-setor fechado';
+            corpo.style.display = 'none';
+            dot.className = 'status-dot vermelho';
+            btnNao.classList.add('ativo');
+            btnSim.classList.remove('ativo');
+        }
+
+        atualizarBarraProgresso();
+    }
+
+    function atualizarBarraProgresso() {
+        let avaliados = 0;
+        Object.keys(estadoSetores).forEach(setor => {
+            if (estadoSetores[setor] !== null) avaliados++;
+        });
+
+        const porcentagem = Math.round((avaliados / totalSetoresCount) * 100);
+        
+        const barFill = document.getElementById('barFill');
+        const txtProgresso = document.getElementById('txtProgresso');
+        const btnCalcular = document.getElementById('btnCalcular');
+
+        barFill.style.width = `${porcentagem}%`;
+        txtProgresso.innerText = `${avaliados} / ${totalSetoresCount} Setores Revisados (${porcentagem}%)`;
+
+        if (porcentagem === 100) {
+            barFill.style.backgroundColor = 'var(--primary)';
+            btnCalcular.disabled = false;
+            btnCalcular.innerText = "⚡ Processar Solicitação para o RH (100% Concluído)";
+        } else {
+            barFill.style.backgroundColor = 'var(--warning)';
+            btnCalcular.disabled = true;
+            btnCalcular.innerText = `Revise todos os setores para liberar (${porcentagem}%)`;
+        }
+    }
+
+    function trocarAba(aba) {
+        document.getElementById('tabBtnConsolidado').classList.remove('active');
+        document.getElementById('tabBtnDetalhado').classList.remove('active');
+        document.getElementById('tabConsolidado').classList.remove('active');
+        document.getElementById('tabDetalhado').classList.remove('active');
+
+        if (aba === 'consolidado') {
+            document.getElementById('tabBtnConsolidado').classList.add('active');
+            document.getElementById('tabConsolidado').classList.add('active');
+        } else {
+            document.getElementById('tabBtnDetalhado').classList.add('active');
+            document.getElementById('tabDetalhado').classList.add('active');
+        }
+    }
+
+    function calcularEPolarizar() {
+        const dataEscala = document.getElementById('dataEscala').value;
+        const corpoDetalhado = document.getElementById('tabelaCorpoDetalhado');
+        corpoDetalhado.innerHTML = "";
+
+        let custoTotalGeral = 0;
+        let itensDetalhados = [];
+
+        Object.keys(estadoSetores).forEach(setor => {
+            if (estadoSetores[setor] === 'operando') {
+                const idClean = limparId(setor);
+                const card = document.getElementById(`card_${idClean}`);
+                const blocosCargos = card.querySelectorAll('.grid-cargos');
+
+                blocosCargos.forEach((bloc, index) => {
+                    const cargoInfo = CARGOS_CONFIG[index];
+                    const necessarios = parseInt(bloc.querySelector('.input-necessario').value) || 0;
+                    const fixo = parseInt(bloc.querySelector('.input-fixo').value) || 0;
+                    const hora = bloc.querySelector('.select-hora').value;
+
+                    const extraQtd = Math.max(0, necessarios - fixo);
+
+                    if (extraQtd > 0) {
+                        const valorUnit = cargoInfo.valor;
+                        const totalItem = extraQtd * valorUnit;
+                        custoTotalGeral += totalItem;
+
+                        itensDetalhados.push({
+                            setor: setor,
+                            cargo: cargoInfo.nome,
+                            hora: hora,
+                            extraQtd: extraQtd,
+                            valorUnit: valorUnit,
+                            totalItem: totalItem
+                        });
+                    }
+                });
+            }
+        });
+
+        dadosUltimoCalculo = {
+            dataEscala: dataEscala,
+            custoTotalGeral: custoTotalGeral,
+            itens: itensDetalhados
+        };
+
+        renderizarRelatoriosNaTela(dadosUltimoCalculo);
+    }
+
+    function renderizarRelatoriosNaTela(dados) {
+        const corpoDetalhado = document.getElementById('tabelaCorpoDetalhado');
+        const corpoConsolidado = document.getElementById('tabelaCorpoConsolidado');
+        corpoDetalhado.innerHTML = "";
+        corpoConsolidado.innerHTML = "";
+
+        let mapaConsolidado = {};
+
+        dados.itens.forEach(item => {
+            // Tabela Detalhada
+            corpoDetalhado.innerHTML += `
+                <tr>
+                    <td><strong>${item.setor}</strong></td>
+                    <td>${item.cargo}</td>
+                    <td style="text-align:center;"><strong>${item.hora}h</strong></td>
+                    <td style="text-align:center;"><strong>${item.extraQtd}</strong></td>
+                    <td style="text-align:right;">R$ ${item.valorUnit.toFixed(2)}</td>
+                    <td style="text-align:right;">R$ ${item.totalItem.toFixed(2)}</td>
+                </tr>
+            `;
+
+            // Agrupamento Consolidado
+            const chave = `${item.cargo}_${item.hora}`;
+            if (!mapaConsolidado[chave]) {
+                mapaConsolidado[chave] = {
+                    nome: item.cargo,
+                    hora: item.hora,
+                    qtdTotal: 0,
+                    valorUnit: item.valorUnit,
+                    totalCusto: 0
+                };
+            }
+            mapaConsolidado[chave].qtdTotal += item.extraQtd;
+            mapaConsolidado[chave].totalCusto += item.totalItem;
+        });
+
+        // Preenche Consolidado
+        Object.values(mapaConsolidado).forEach(item => {
+            corpoConsolidado.innerHTML += `
+                <tr>
+                    <td><strong>${item.nome}</strong></td>
+                    <td style="text-align:center;"><strong>${item.hora}h</strong></td>
+                    <td style="text-align:center;"><span style="background:var(--primary-light); color:var(--primary); padding:4px 10px; border-radius:12px; font-weight:bold;">${item.qtdTotal} Extras</span></td>
+                    <td style="text-align:right;">R$ ${item.valorUnit.toFixed(2)}</td>
+                    <td style="text-align:right;"><strong>R$ ${item.totalCusto.toFixed(2)}</strong></td>
+                </tr>
+            `;
+        });
+
+        document.getElementById('custoTotalGeral').innerText = `R$ ${dados.custoTotalGeral.toFixed(2)}`;
+        document.getElementById('labelDataConsolidada').innerText = `Data: ${dados.dataEscala.split('-').reverse().join('/')}`;
+        document.getElementById('resultadoBox').style.display = 'block';
+    }
+
+    function salvarNoHistorico() {
+        if (!dadosUltimoCalculo || dadosUltimoCalculo.itens.length === 0) {
+            alert("Nenhum cálculo disponível para salvar.");
+            return;
+        }
+
+        const payload = {
+            id: Date.now(),
+            dataEnvio: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR'),
+            dataEscala: dadosUltimoCalculo.dataEscala.split('-').reverse().join('/'),
+            totalCusto: `R$ ${dadosUltimoCalculo.custoTotalGeral.toFixed(2)}`,
+            resumo: `${dadosUltimoCalculo.itens.length} lançamentos de extras`,
+            detalhes: dadosUltimoCalculo
+        };
+
+        let historico = JSON.parse(localStorage.getItem('historicoBourbonV5')) || [];
+        historico.unshift(payload);
+        localStorage.setItem('historicoBourbonV5', JSON.stringify(historico));
+
+        alert("✅ Enviado com sucesso para o RH e salvo no Histórico!");
+    }
+
+    function abrirHistorico() {
+        const modal = document.getElementById('modalHistorico');
+        const tabela = document.getElementById('tabelaHistoricoCorpo');
+        let historico = JSON.parse(localStorage.getItem('historicoBourbonV5')) || [];
+
+        tabela.innerHTML = "";
+
+        if(historico.length === 0) {
+            tabela.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:15px;">Nenhum histórico gravado.</td></tr>`;
+        } else {
+            historico.forEach((h, index) => {
+                tabela.innerHTML += `
+                    <tr>
+                        <td>${h.dataEnvio}</td>
+                        <td><strong>${h.dataEscala}</strong></td>
+                        <td style="color:var(--success); font-weight:bold;">${h.totalCusto}</td>
+                        <td>${h.resumo}</td>
+                        <td style="text-align:center;">
+                            <button class="btn-action-sm" style="color:var(--primary);" onclick="reabrirRegistro(${index})">👁️ Abrir</button>
+                            <button class="btn-action-sm" style="color:#0284c7;" onclick="exportarExcelRegistro(${index})">📊 Excel</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+        modal.style.display = "flex";
+    }
+
+    function reabrirRegistro(index) {
+        let historico = JSON.parse(localStorage.getItem('historicoBourbonV5')) || [];
+        const registro = historico[index];
+        if (registro && registro.detalhes) {
+            dadosUltimoCalculo = registro.detalhes;
+            renderizarRelatoriosNaTela(registro.detalhes);
+            fecharHistorico();
+            document.getElementById('resultadoBox').scrollIntoView({ behavior: 'smooth' });
+        } else {
+            alert("Registro não contém dados detalhados.");
+        }
+    }
+
+    function exportarExcelRegistro(index) {
+        let historico = JSON.parse(localStorage.getItem('historicoBourbonV5')) || [];
+        const registro = historico[index];
+        if (!registro || !registro.detalhes) return;
+
+        let csvContent = "data:text/csv;charset=utf-8,Setor;Cargo;Horario;Qtd Extra;Valor Unitario;Custo Total\n";
+        
+        registro.detalhes.itens.forEach(item => {
+            csvContent += `"${item.setor}";"${item.cargo}";"${item.hora}h";${item.extraQtd};"${item.valorUnit.toFixed(2)}";"${item.totalItem.toFixed(2)}"\n`;
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Solicitacao_Extras_${registro.dataEscala.replace(/\//g, '-')}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function fecharHistorico() {
+        document.getElementById('modalHistorico').style.display = "none";
+    }
+</script>
+</body>
+</html>

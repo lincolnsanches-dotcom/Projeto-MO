@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dimensionamento Semanal A&B - Bourbon</title>
+    
+    <!-- Biblioteca SheetJS para Exportação Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #005a36;
+            --primary-light: #f0f7f4;
+            --accent: #0d9488;
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+            --bg-body: #f8fafc;
+            --border: #e2e8f0;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        main {
+            width: 100%;
+            max-width: 950px;
+            background: white;
+            padding: 25px 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+        }
+
+        .header {
+            border-bottom: 2px solid var(--primary-light);
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h2 {
+            color: var(--primary);
+            margin: 0 0 8px 0;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            margin: 0;
+            font-size: 13px;
+        }
+
+        .logo-container {
+            font-family: 'Georgia', serif; 
+            font-size: 18px; 
+            font-weight: bold; 
+            color: var(--primary); 
+            border-left: 3px solid var(--primary); 
+            padding-left: 12px;
+            text-align: right;
+            line-height: 1.1;
+        }
+
+        .secao-titulo {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            margin: 25px 0 10px 0;
+            border-left: 3px solid var(--primary);
+            padding-left: 8px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .campo {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        input, select {
+            padding: 10px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            width: 100%;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            border: none;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-primary:hover { background-color: #004225; }
+
+        .btn-excel { background-color: #107c41; color: white; }
+        .btn-excel:hover { background-color: #0b592e; }
+
+        .btn-print { background-color: #0d9488; color: white; }
+        .btn-print:hover { background-color: #0f766e; }
+
+        /* Card do Pedido Valorizado */
+        .resultado-box {
+            display: none; 
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+            background: #ffffff;
+            margin-top: 25px;
+        }
+
+        .card-header-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .tab-navigation {
+            display: flex;
+            gap: 10px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+            margin-bottom: 15px;
+        }
+
+        .tab-btn {
+            background-color: #f1f5f9;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .tab-btn.active {
+            background-color: #ffffff;
+            color: var(--text-main);
+            border-color: #cbd5e1;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .info-data-destaque {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 15px;
+            background-color: var(--primary-light);
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .tabela-pedidos {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            margin-bottom: 15px;
+        }
+
+        .tabela-pedidos th {
+            border-bottom: 2px solid var(--border);
+            padding: 12px 10px;
+            font-size: 13px;
+        }
+
+        .tabela-pedidos td {
+            padding: 12px 10px;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .resumo-footer-card {
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #ffffff;
+            margin-top: 15px;
+            font-weight: 700;
+        }
+
+        .col-local { display: none; }
+        body.modo-detalhado .col-local { display: table-cell; }
+
+        /* Histórico */
+        .historico-section {
+            margin-top: 40px;
+            border-top: 2px dashed var(--border);
+            padding-top: 25px;
+        }
+
+        .tabela-historico {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .tabela-historico th {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            padding: 10px;
+            font-size: 12px;
+            text-align: left;
+        }
+
+        .tabela-historico td {
+            padding: 10px;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .btn-ver { background-color: var(--primary); color: white; padding: 5px 10px; font-size: 11px; }
+        .btn-del { background-color: #ef4444; color: white; padding: 5px 10px; font-size: 11px; }
+
+        /* ========================================================= */
+        /* REGRA ABSOLUTA DE IMPRESSÃO (GARANTE APENAS 1 PÁGINA)    */
+        /* ========================================================= */
+        @media print {
+            html, body {
+                background: #ffffff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                height: auto !important;
+                overflow: hidden !important;
+            }
+
+            /* Esconde absolutamente tudo na tela por padrão */
+            body * {
+                visibility: hidden !important;
+                height: 0 !important;
+                overflow: hidden !important;
+            }
+
+            /* Força visibilidade apenas do Card de Resultado */
+            #resultadoBox, #resultadoBox * {
+                visibility: visible !important;
+                height: auto !important;
+                overflow: visible !important;
+            }
+
+            /* Fixa o Card no topo absoluto da página impressa */
+            #resultadoBox {
+                position: fixed !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 20px !important;
+                border: 2px solid #000 !important;
+                background: #ffffff !important;
+                box-shadow: none !important;
+                z-index: 999999 !important;
+            }
+
+            /* Esconde elementos internos desnecessários na folha */
+            .no-print, .tab-navigation, .btn-group, button {
+                display: none !important;
+                height: 0 !important;
+            }
+
+            .tabela-pedidos {
+                width: 100% !important;
+                border-collapse: collapse !important;
+                margin-top: 10px !important;
+            }
+
+            .tabela-pedidos th {
+                border-bottom: 2px solid #000 !important;
+                color: #000 !important;
+            }
+
+            .tabela-pedidos td {
+                border-bottom: 1px solid #ccc !important;
+                color: #000 !important;
+            }
+
+            .resumo-footer-card {
+                border: 1.5px solid #000 !important;
+                background-color: #fff !important;
+                margin-top: 15px !important;
+            }
+
+            .info-data-destaque {
+                border: 1px solid #000 !important;
+                background-color: #fff !important;
+                color: #000 !important;
+            }
+
+            body.print-resumo .col-local {
+                display: none !important;
+            }
+
+            body.print-detalhado .col-local {
+                display: table-cell !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<main>
+    <div class="header">
+        <div>
+            <h2>📋 Dimensionamento Semanal A&B</h2>
+            <p>Geração do Pedido Valorizado e Validação do Quadro Geral</p>
+        </div>
+        <div class="logo-container">
+            BOURBON<br>
+            <span style="font-size: 8px; color: #4b5563; font-weight: 700;">HOSPITALIDADE</span>
+        </div>
+    </div>
+
+    <!-- Formulário -->
+    <div class="secao-titulo">1. Dados do Pedido</div>
+    <div class="form-grid">
+        <div class="campo">
+            <label for="dataEscala">Data da Operação:</label>
+            <input type="date" id="dataEscala">
+        </div>
+        <div class="campo">
+            <label for="periodo">Turno / Período:</label>
+            <select id="periodo">
+                <option value="Manhã">Manhã</option>
+                <option value="Tarde">Tarde</option>
+                <option value="Noite">Noite</option>
+            </select>
+        </div>
+        <div class="campo">
+            <label for="adultos">Quantidade de PAX:</label>
+            <input type="number" id="adultos" value="500">
+        </div>
+    </div>
+
+    <div class="btn-group">
+        <button class="btn-primary" onclick="gerarPedido()">⚡ Gerar Pedido Valorizado</button>
+    </div>
+
+    <!-- CARD DO PEDIDO (ÁREA DE IMPRESSÃO EXCLUSIVA) -->
+    <div id="resultadoBox" class="resultado-box">
+        <div class="card-header-title">
+            📝 Pedido de Extras Valorizado (Confirmado)
+        </div>
+
+        <div class="tab-navigation no-print">
+            <button class="tab-btn active" id="btnTabResumo" onclick="alternarAba('resumo')">📊 Resumo por Função e Turno</button>
+            <button class="tab-btn" id="btnTabDetalhado" onclick="alternarAba('detalhado')">🏢 Detalhamento por Locais</button>
+        </div>
+
+        <div class="info-data-destaque" id="exibicaoData">
+            📅 Data da Operação: --/--/----
+        </div>
+        
+        <table class="tabela-pedidos">
+            <thead>
+                <tr>
+                    <th class="col-local">Local / Setor</th>
+                    <th>Turno</th>
+                    <th>Cargo / Função</th>
+                    <th style="text-align: center;">Qtd Extra</th>
+                    <th>Entrada</th>
+                    <th style="text-align: right;">Valor Diária (R$)</th>
+                    <th style="text-align: right;">Subtotal (R$)</th>
+                </tr>
+            </thead>
+            <tbody id="tabelaCorpo"></tbody>
+        </table>
+
+        <div class="resumo-footer-card">
+            <span id="totalPessoas">Total de Pessoas Extras: 0</span>
+            <span id="custoGeral">Custo Geral Estimado: R$ 0,00</span>
+        </div>
+
+        <!-- Botões do Card -->
+        <div class="btn-group no-print" style="margin-top: 20px;">
+            <button class="btn-primary" onclick="salvarHistorico()">💾 Gravar Pedido</button>
+            <button class="btn-excel" onclick="exportarExcel()">📊 Exportar para Excel</button>
+            <button class="btn-print" onclick="imprimir('resumo')">🖨️ Impr. Consolidada</button>
+            <button class="btn-print" onclick="imprimir('detalhado')">🖨️ Impr. Detalhada</button>
+        </div>
+    </div>
+
+    <!-- Histórico de Pedidos -->
+    <div class="historico-section">
+        <div class="secao-titulo" style="margin: 0;">📜 Histórico de Pedidos Gravados</div>
+        <table class="tabela-historico">
+            <thead>
+                <tr>
+                    <th>Data Operação</th>
+                    <th>Turno</th>
+                    <th>Qtd Extras</th>
+                    <th>Custo Total</th>
+                    <th style="text-align: center;">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="historicoCorpo"></tbody>
+        </table>
+    </div>
+</main>
+
+<script>
+    let pedidoAtual = null;
+
+    document.getElementById('dataEscala').valueAsDate = new Date();
+    window.onload = renderizarHistorico;
+
+    function alternarAba(modo) {
+        if (modo === 'detalhado') {
+            document.body.classList.add('modo-detalhado');
+            document.getElementById('btnTabDetalhado').classList.add('active');
+            document.getElementById('btnTabResumo').classList.remove('active');
+        } else {
+            document.body.classList.remove('modo-detalhado');
+            document.getElementById('btnTabResumo').classList.add('active');
+            document.getElementById('btnTabDetalhado').classList.remove('active');
+        }
+    }
+
+    function gerarPedido() {
+        const dataInput = document.getElementById('dataEscala').value;
+        const turno = document.getElementById('periodo').value;
+
+        if (!dataInput) {
+            alert("Selecione uma data!");
+            return;
+        }
+
+        const partes = dataInput.split('-');
+        const dataFormatada = `${partes[2]}/${partes[1]}/${partes[0]}`;
+        document.getElementById('exibicaoData').innerText = `📅 Data da Operação: ${dataFormatada}`;
+
+        // Exemplo de dados calculados
+        const itens = [
+            { local: "Restaurante TOM", turno: turno, cargo: "Cozinheiro", qtd: 6, entrada: "06:00", valor: 180, subtotal: 1080 },
+            { local: "Restaurante TOM", turno: turno, cargo: "Steward", qtd: 4, entrada: "06:00", valor: 140, subtotal: 560 },
+            { local: "Restaurante KIBÔ", turno: turno, cargo: "Cozinheiro", qtd: 5, entrada: "16:00", valor: 180, subtotal: 900 },
+            { local: "Restaurante KIBÔ", turno: turno, cargo: "Steward", qtd: 5, entrada: "17:00", valor: 140, subtotal: 700 }
+        ];
+
+        pedidoAtual = {
+            data: dataFormatada,
+            dataOriginal: dataInput,
+            turno: turno,
+            itens: itens
+        };
+
+        renderizarTabela();
+        document.getElementById('resultadoBox').style.display = 'block';
+    }
+
+    function renderizarTabela() {
+        const tbody = document.getElementById('tabelaCorpo');
+        tbody.innerHTML = "";
+
+        let totalQtd = 0;
+        let totalCusto = 0;
+
+        pedidoAtual.itens.forEach(item => {
+            totalQtd += item.qtd;
+            totalCusto += item.subtotal;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="col-local">${item.local}</td>
+                <td>${item.turno}</td>
+                <td><strong>${item.cargo}</strong></td>
+                <td style="text-align: center;"><strong>${item.qtd}</strong></td>
+                <td>${item.entrada}</td>
+                <td style="text-align: right;">R$ ${item.valor.toFixed(2)}</td>
+                <td style="text-align: right;"><strong>R$ ${item.subtotal.toFixed(2)}</strong></td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('totalPessoas').innerText = `Total de Pessoas Extras: ${totalQtd}`;
+        document.getElementById('custoGeral').innerText = `Custo Geral Estimado: R$ ${totalCusto.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+    }
+
+    /* Impressão em Página Única */
+    function imprimir(tipo) {
+        document.body.classList.remove('print-resumo', 'print-detalhado');
+        document.body.classList.add(`print-${tipo}`);
+
+        window.print();
+
+        setTimeout(() => {
+            document.body.classList.remove(`print-${tipo}`);
+        }, 1000);
+    }
+
+    /* Exportação Excel contendo a Data */
+    function exportarExcel() {
+        if (!pedidoAtual) return;
+
+        const dadosExcel = pedidoAtual.itens.map(i => ({
+            'Data Operação': pedidoAtual.data,
+            'Local / Setor': i.local,
+            'Turno': i.turno,
+            'Cargo / Função': i.cargo,
+            'Qtd Extra': i.qtd,
+            'Entrada': i.entrada,
+            'Valor Diária (R$)': i.valor,
+            'Subtotal (R$)': i.subtotal
+        }));
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(dadosExcel);
+        XLSX.utils.book_append_sheet(wb, ws, "Pedido Extras");
+        XLSX.writeFile(wb, `Pedido_Extras_${pedidoAtual.data.replace(/\//g, '-')}.xlsx`);
+    }
+
+    function salvarHistorico() {
+        let historico = JSON.parse(localStorage.getItem('historicoPedidos')) || [];
+        const novoItem = {
+            id: Date.now(),
+            data: pedidoAtual.data,
+            dataOriginal: pedidoAtual.dataOriginal,
+            turno: pedidoAtual.turno,
+            qtd: pedidoAtual.itens.reduce((a, b) => a + b.qtd, 0),
+            custo: pedidoAtual.itens.reduce((a, b) => a + b.subtotal, 0),
+            itens: pedidoAtual.itens
+        };
+
+        historico.unshift(novoItem);
+        localStorage.setItem('historicoPedidos', JSON.stringify(historico));
+        renderizarHistorico();
+        alert("Pedido gravado com sucesso!");
+    }
+
+    function renderizarHistorico() {
+        const historico = JSON.parse(localStorage.getItem('historicoPedidos')) || [];
+        const tbody = document.getElementById('historicoCorpo');
+        tbody.innerHTML = "";
+
+        if (historico.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 15px;">Nenhum pedido gravado.</td></tr>`;
+            return;
+        }
+
+        historico.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${item.data}</strong></td>
+                <td>${item.turno}</td>
+                <td>${item.qtd} pax</td>
+                <td><strong>R$ ${item.custo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</strong></td>
+                <td style="text-align: center; display: flex; gap: 8px; justify-content: center;">
+                    <button class="btn-ver" onclick="restaurar(${item.id})">👁️ Ver</button>
+                    <button class="btn-del" onclick="excluirComLog(${item.id})">🗑️ Excluir</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function restaurar(id) {
+        const historico = JSON.parse(localStorage.getItem('historicoPedidos')) || [];
+        const item = historico.find(i => i.id === id);
+        if (item) {
+            pedidoAtual = item;
+            document.getElementById('exibicaoData').innerText = `📅 Data da Operação: ${item.data}`;
+            renderizarTabela();
+            document.getElementById('resultadoBox').style.display = 'block';
+            document.getElementById('resultadoBox').scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    /* Exclusão com Registro do Usuário (Opção B - Log de Auditoria) */
+    function excluirComLog(id) {
+        const usuario = prompt("Para confirmar a exclusão, digite seu NOME DE USUÁRIO:");
+        if (!usuario || !usuario.trim()) {
+            alert("Ação cancelada! É obrigatório informar o usuário para o log de auditoria.");
+            return;
+        }
+
+        let historico = JSON.parse(localStorage.getItem('historicoPedidos')) || [];
+        const item = historico.find(i => i.id === id);
+
+        if (item) {
+            // Salva o Log na tabela de auditoria
+            let logs = JSON.parse(localStorage.getItem('auditLogsExclusao')) || [];
+            logs.push({
+                acao: 'EXCLUSAO_PEDIDO',
+                pedidoId: id,
+                dataOperacao: item.data,
+                usuarioExcluiu: usuario.trim(),
+                dataHoraExclusao: new Date().toLocaleString('pt-BR')
+            });
+            localStorage.setItem('auditLogsExclusao', JSON.stringify(logs));
+
+            // Remove o registro
+            historico = historico.filter(i => i.id !== id);
+            localStorage.setItem('historicoPedidos', JSON.stringify(historico));
+            renderizarHistorico();
+
+            alert(`Registro #${id} excluído com sucesso por ${usuario.trim()}. O evento foi registrado no Log de Auditoria.`);
+        }
+    }
+</script>
+
+</body>
+</html>

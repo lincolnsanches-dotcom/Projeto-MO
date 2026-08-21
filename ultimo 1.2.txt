@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão Inteligente de Extras - A&B</title>
+    <style>
+        /* CSS Principal - Design Elegante em Tons de Verde Bourbon */
+        :root {
+            --primary: #005a36;       /* Verde Oficial Bourbon */
+            --primary-light: #f0f7f4; /* Fundo verde bem claro */
+            --accent: #0d9488;        /* Verde Água */
+            --success: #10b981;       /* Verde Sucesso */
+            --text-main: #1f2937;     /* Cinza Escuro */
+            --text-muted: #4b5563;    /* Cinza Médio */
+            --bg-body: #f8fafc;       /* Fundo da tela */
+            --border: #e2e8f0;        /* Bordas */
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 850px;
+            background: white;
+            padding: 25px 15px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+        }
+
+        .header {
+            border-bottom: 2px solid var(--primary-light);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-text {
+            flex: 1;
+        }
+
+        .header h2 {
+            color: var(--primary);
+            margin: 0 0 8px 0;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            margin: 0;
+            font-size: 13px;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            min-width: 150px;
+        }
+
+        .secao-titulo {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            margin: 25px 0 10px 0;
+            border-left: 3px solid var(--primary);
+            padding-left: 8px;
+            line-height: 1.3;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .campo {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .campo.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-main);
+        }
+
+        input, select {
+            padding: 12px;
+            border: 1.5px solid var(--border);
+            border-radius: 6px;
+            font-size: 15px;
+            background-color: #ffffff;
+            transition: border-color 0.2s, background-color 0.2s;
+            color: var(--text-main);
+            outline: none;
+            width: 100%;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+        }
+
+        select:disabled {
+            background-color: #f1f5f9;
+            color: #4b5563;
+            cursor: not-allowed;
+            border-color: #e2e8f0;
+            font-weight: 600;
+        }
+
+        .info-trava {
+            font-size: 12px;
+            color: #0d9488;
+            font-weight: 600;
+            margin-top: 4px;
+            display: none;
+            line-height: 1.4;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 25px;
+            margin-bottom: 30px;
+        }
+
+        @media (min-width: 600px) {
+            .btn-group {
+                flex-direction: row;
+            }
+        }
+
+        button {
+            width: 100%;
+            border: none;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #004225;
+        }
+
+        .btn-secondary {
+            background-color: #f1f5f9;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background-color: #e2e8f0;
+            color: var(--text-main);
+        }
+
+        .resultado-box {
+            display: none; 
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: #ffffff;
+            margin-top: 30px;
+            width: 100%;
+        }
+
+        .resultado-header {
+            background-color: var(--primary-light);
+            padding: 15px;
+            border-bottom: 1.5px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        @media (min-width: 500px) {
+            .resultado-header {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
+
+        .resultado-header h3 {
+            margin: 0;
+            color: var(--primary);
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .badge-status {
+            background-color: var(--primary);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .info-resumo {
+            padding: 15px;
+            background-color: #f8fafc;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            color: var(--text-muted);
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        @media (min-width: 500px) {
+            .info-resumo {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            }
+        }
+
+        .tabela-escala {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            display: block;
+            overflow-x: auto;
+        }
+
+        .tabela-escala th {
+            background-color: #f8fafc;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            padding: 12px 10px;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        .tabela-escala td {
+            padding: 12px 10px;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-main);
+            vertical-align: middle;
+        }
+
+        .total-row {
+            background-color: #fcfdfd;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-start;
+            border-bottom: 1.5px solid var(--border);
+        }
+
+        @media (min-width: 500px) {
+            .total-row {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
+
+        .total-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .total-valor {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--success);
+        }
+
+        .assinatura-container {
+            padding: 25px 15px;
+            background-color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            gap: 35px;
+            align-items: center;
+        }
+
+        @media (min-width: 500px) {
+            .assinatura-container {
+                flex-direction: row;
+                justify-content: space-around;
+                gap: 20px;
+            }
+        }
+
+        .assinatura-bloco {
+            text-align: center;
+            width: 100%;
+            max-width: 220px;
+        }
+
+        .linha-assinatura {
+            border-top: 1.5px solid var(--text-muted);
+            margin-bottom: 8px;
+            width: 100%;
+        }
+
+        .assinatura-cargo {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .historico-section {
+            margin-top: 40px;
+            border-top: 2px dashed var(--border);
+            padding-top: 30px;
+            width: 100%;
+        }
+
+        .historico-header-acoes {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            gap: 15px;
+        }
+
+        @media (min-width: 600px) {
+            .historico-header-acoes {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+        }
+
+        .tabela-historico {
+            width: 100%;
+            border-collapse: collapse;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            display: block;
+            overflow-x: auto;
+        }
+
+        .tabela-historico th {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            padding: 12px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .tabela-historico td {
+            padding: 12px 10px;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        .btn-acao-hist {
+            padding: 6px 10px;
+            font-size: 11px;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-ver { background-color: var(--primary); color: white; }
+        .btn-del { background-color: #ef4444; color: white; }
+
+        @media (max-width: 600px) {
+            .header {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                gap: 15px;
+            }
+            .logo-container {
+                justify-content: center;
+                width: 100%;
+            }
+            div[style*="text-align: right"] {
+                text-align: center !important;
+                border-left: none !important;
+                border-bottom: 3px solid #005a36;
+                padding-left: 0 !important;
+                padding-bottom: 8px;
+            }
+        }
+
+        @media print {
+            body { background-color: white; color: black; padding: 0; margin: 0; }
+            .container { box-shadow: none; border: none; padding: 0; max-width: 100%; }
+            .form-grid, .btn-group, .header p, .secao-titulo, .historico-section, .btn-acao-hist { display: none !important; }
+            .header { border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px; display: flex !important; flex-direction: row !important; justify-content: space-between !important; align-items: center !important; }
+            .logo-container { display: flex !important; }
+            .resultado-box { display: block !important; border: 1px solid #000; }
+            .resultado-header { background-color: #f0f0f0 !important; border-bottom: 1px solid #000; }
+            .badge-status { border: 1px solid #000; color: #000; background: none; }
+            .tabela-escala th { background-color: #f0f0f0 !important; color: #000; border-bottom: 1px solid #000; }
+            .tabela-escala td { border-bottom: 1px solid #ccc; }
+            .total-row { border-bottom: 1px solid #000; }
+            .total-valor { color: #000 !important; font-weight: bold; }
+            .assinatura-container { margin-top: 50px; page-break-inside: avoid; }
+            .linha-assinatura { border-top: 1px solid #000; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div class="header-text">
+            <h2>📊 Gestão Inteligente de Extras</h2>
+            <p>Dimensionamento e custos automatizados com base na ocupação de A&B</p>
+        </div>
+        <div class="logo-container" id="brandLogo">
+            <div style="font-family: 'Georgia', serif; font-size: 22px; font-weight: bold; color: #005a36; letter-spacing: 2px; text-align: right; border-left: 3px solid #005a36; padding-left: 15px; line-height: 1.1;">
+                BOURBON<br>
+                <span style="font-size: 9px; font-family: 'Segoe UI', sans-serif; color: #4b5563; letter-spacing: 1.5px; font-weight: 700; display: block; margin-top: 2px;">HOSPITALIDADE</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dados Gerais -->
+    <div class="secao-titulo">1. Dados do Evento / Ocupação</div>
+    <div class="form-grid">
+        <div class="campo">
+            <label for="dataEscala">Data da Escala:</label>
+            <input type="date" id="dataEscala">
+        </div>
+        <div class="campo">
+            <label for="periodo">Período / Refeição:</label>
+            <select id="periodo">
+                <option value="Café da Manhã">Café da Manhã</option>
+                <option value="Café da Manhã TOM" selected>Café da Manhã TOM</option>
+                <option value="Almoço">Almoço</option>
+                <option value="Jantar">Jantar</option>
+                <option value="Evento Especial">Evento Especial</option>
+            </select>
+        </div>
+        <div class="campo">
+            <label for="adultos">Quantidade de Adultos:</label>
+            <input type="number" id="adultos" value="0" min="0" oninput="validarTravaBuffet()">
+        </div>
+        <div class="campo">
+            <label for="criancas">Quantidade de Crianças:</label>
+            <input type="number" id="criancas" value="0" min="0" oninput="validarTravaBuffet()">
+        </div>
+        <div class="campo full-width">
+            <label for="buffet">Configuração do Buffet:</label>
+            <select id="buffet">
+                <option value="1">1 Ponto (Reduzido)</option>
+                <option value="2">2 Pontos (Completo)</option>
+            </select>
+            <span id="travaMensagem" class="info-trava"></span>
+        </div>
+    </div>
+
+    <!-- Staff Fixo da Casa -->
+    <div class="secao-titulo">2. Staff Fixo da Casa (Escalados no Dia)</div>
+    <div class="form-grid">
+        <div class="campo">
+            <label for="fixosCozinha">Cozinheiros da Casa:</label>
+            <input type="number" id="fixosCozinha" value="0" min="0" placeholder="Ex: 5">
+        </div>
+        <div class="campo">
+            <label for="fixosLider">Líderes da Casa:</label>
+            <input type="number" id="fixosLider" value="0" min="0" placeholder="Ex: 1">
+        </div>
+    </div>
+
+    <!-- Ações -->
+    <div class="btn-group">
+        <button class="btn-primary" onclick="calcularEscala(true)">⚡ Gerar Escala</button>
+        <button class="btn-secondary" onclick="window.print()" id="btnImprimir" style="display: none;">🖨️ Imprimir / Salvar PDF</button>
+    </div>
+
+    <!-- Área de Resultados -->
+    <div id="resultadoBox" class="resultado-box">
+        <div class="resultado-header">
+            <h3 id="tituloRelatorio">ESCALA DE EXTRAS GERADA</h3>
+            <span class="badge-status" id="badgeStatus">Automático</span>
+        </div>
+
+        <div class="info-resumo">
+            <div><strong>Período:</strong> <span id="resumoPeriodo">-</span></div>
+            <div><strong>Público:</strong> <span id="resumoPublico">0 (0 Ad / 0 Cr)</span></div>
+            <div><strong>Demanda Total:</strong> <span id="resumoDemanda">0</span></div>
+            <div><strong>Fixo da Casa:</strong> <span id="resumoFixo">0</span></div>
+        </div>
+        
+        <table class="tabela-escala">
+            <thead>
+                <tr>
+                    <th>Função Contratada</th>
+                    <th style="text-align: center;">Qtd.</th>
+                    <th style="text-align: right;">Valor Unitário</th>
+                    <th>Estações / Áreas de Atuação Cobertas</th>
+                    <th>Horário</th>
+                    <th style="text-align: right;">Custo Total</th>
+                </tr>
+            </thead>
+            <tbody id="tabelaCorpo"></tbody>
+        </table>
+
+        <div class="total-row">
+            <span class="total-label">CUSTO TOTAL EM EXTRAS (MO):</span>
+            <span class="total-valor" id="custoTotal">R$ 0,00</span>
+        </div>
+
+        <div class="assinatura-container">
+            <div class="assinatura-bloco">
+                <div class="linha-assinatura"></div>
+                <div class="assinatura-cargo">Assinatura do Responsável</div>
+            </div>
+            <div class="assinatura-bloco">
+                <div class="linha-assinatura"></div>
+                <div class="assinatura-cargo">Visto / Gerência A&B</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seção Histórico -->
+    <div class="historico-section">
+        <div class="historico-header-acoes">
+            <div>
+                <div class="secao-titulo" style="margin: 0;">🗄️ Histórico de Escalas Salvas</div>
+                <p style="font-size: 13px; color: var(--text-muted); margin: 5px 0 0 0;">Dados seguros localmente. Exporte mensalmente para segurança total.</p>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; width: 100%; max-width: 400px; margin-top: 5px;">
+                <button class="btn-backup" onclick="exportarBackup()" style="flex: 1; min-width: 140px;">📥 Exportar Banco</button>
+                <button class="btn-backup" onclick="document.getElementById('uploadBackup').click()" style="flex: 1; min-width: 140px;">📤 Importar Banco</button>
+                <input type="file" id="uploadBackup" accept=".csv" style="display: none;" onchange="importarBackup(event)">
+            </div>
+        </div>
+        
+        <table class="tabela-historico">
+            <thead>
+                <tr>
+                    <th style="text-align: left;">Data</th>
+                    <th style="text-align: left;">Refeição</th>
+                    <th style="text-align: center;">Público</th>
+                    <th style="text-align: right;">Valor Total</th>
+                    <th style="text-align: center; width: 150px;">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="historicoCorpo"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.getElementById('dataEscala').valueAsDate = new Date();
+
+    window.onload = function() {
+        renderizarHistorico();
+        validarTravaBuffet();
+    };
+
+    function validarTravaBuffet() {
+        const qtdAdultos = parseInt(document.getElementById('adultos').value) || 0;
+        const qtdCriancas = parseInt(document.getElementById('criancas').value) || 0;
+        const total = qtdAdultos + qtdCriancas;
+        const buffetSelect = document.getElementById('buffet');
+        const travaMensagem = document.getElementById('travaMensagem');
+
+        if (total === 0) {
+            buffetSelect.disabled = false;
+            travaMensagem.style.display = "none";
+        }
+        else if (total < 400) {
+            buffetSelect.value = "1";
+            buffetSelect.disabled = true; 
+            travaMensagem.style.color = "#0d9488";
+            travaMensagem.innerText = "🔒 Bloqueado: Menos de 400 pessoas exige 1 Ponto de Buffet (Reduzido).";
+            travaMensagem.style.display = "block";
+        } 
+        else {
+            buffetSelect.value = "2"; 
+            buffetSelect.disabled = true; 
+            travaMensagem.style.color = "var(--success)";
+            travaMensagem.innerText = "🔒 Automatizado: Acima de 400 pessoas exige obrigatoriamente 2 Pontos de Buffet.";
+            travaMensagem.style.display = "block";
+        }
+    }
+
+    function calcularEscala(salvarNoHistorico = true) {
+        const dataInput = document.getElementById('dataEscala').value;
+        const periodoSelecionado = document.getElementById('periodo').value;
+        const qtdAdultos = parseInt(document.getElementById('adultos').value) || 0;
+        const qtdCriancas = parseInt(document.getElementById('criancas').value) || 0;
+        
+        if (salvarNoHistorico) {
+            validarTravaBuffet();
+        }
+        const pontosBuffet = document.getElementById('buffet').value;
+
+        const fixosCozinha = parseInt(document.getElementById('fixosCozinha').value) || 0;
+        const fixosLider = parseInt(document.getElementById('fixosLider').value) || 0;
+        const totalHospedes = qtdAdultos + qtdCriancas;
+
+        if (totalHospedes <= 0) {
+            alert("Por favor, insira pelo menos um hóspede!");
+            return;
+        }
+
+        let dataFormatada = "";
+        if (dataInput) {
+            const partes = dataInput.split('-');
+            dataFormatada = `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
+
+        const valorCozinheiro = 317.79;
+        const valorLider = 327.73;
+        let demandaCozinheirosTotal = 0;
+        let demandaLideresTotal = 0;
+
+        if (totalHospedes <= 400) {
+            demandaLideresTotal = 0;
+            demandaCozinheirosTotal = (pontosBuffet === "1") ? 8 : 10;
+        } else {
+            demandaCozinheirosTotal = 13;
+            demandaLideresTotal = 1;
+        }
+
+        const extrasCozinheirosFaltantes = Math.max(0, demandaCozinheirosTotal - fixosCozinha);
+        const extrasLideresFaltantes = Math.max(0, demandaLideresTotal - fixosLider);
+
+        let extrasAgrupados = [];
+        let custoTotal = 0;
+        let horarioCozinheiro = "06h - 14h";
+        let horarioLider = "15h - 23h";
+
+        if (periodoSelecionado === "Almoço") {
+            horarioCozinheiro = "10h - 18h"; horárioLider = "11h - 19h";
+        } else if (periodoSelecionado === "Jantar") {
+            horarioCozinheiro = "16h - 00h"; horárioLider = "17h - 01h";
+        } else if (periodoSelecionado === "Evento Especial") {
+            horarioCozinheiro = "A definir"; horárioLider = "A definir";
+        }
+
+        const estacoesPonto1 = [
+            "Estação de Omelete", "Estação de Waffle / Churros", "Misto / Croque Monsieur",
+            "Suco / Cuscuz", "Estação de Tapioca", "Pães Assados", "Pista Fria 1", 
+            "Pista Fria 2", "Pista Quente 1", "Pista Quente 2", "Back 1", "Back 2"
+        ];
+
+        const estacoesPonto2 = [
+            "Estação de Omelete (Pt 1)", "Estação de Omelete (Pt 2)", "Estação de Waffle (Pt 1)",
+            "Estação de Waffle (Pt 2)", "Misto / Croque Monsieur", "Suco / Cuscuz",
+            "Estação de Tapioca", "Pães Assados", "Pista Fria 1", "Pista Fria 2",
+            "Pista Quente 1", "Pista Quente 2", "Back 1", "Back 2"
+        ];
+
+        let listaEstacoesAtivas = [];
+        if (periodoSelecionado === "Café da Manhã" || periodoSelecionado === "Café da Manhã TOM") {
+            listaEstacoesAtivas = (pontosBuffet === "2") ? estacoesPonto2 : estacoesPonto1;
+        } else {
+            listaEstacoesAtivas = ["Apoio Produção", "Auxílio Buffet", "Geral"];
+        }
+
+        let areasCozinha = [];
+        for (let i = 0; i < extrasCozinheirosFaltantes; i++) {
+            areasCozinha.push(listaEstacoesAtivas[i] || "Apoio Geral Cozinha");
+        }
+
+        if (extrasCozinheirosFaltantes > 0) {
+            const custoCozinheiros = extrasCozinheirosFaltantes * valorCozinheiro;
+            extrasAgrupados.push({
+                funcao: "Cozinheiro Extra", amount: extrasCozinheirosFaltantes, unitario: valorCozinheiro,
+                area: areasCozinha.join(" | "), horario: horarioCozinheiro, custoTotalItem: custoCozinheiros
+            });
+            custoTotal += custoCozinheiros;
+        }
+
+        if (extrasLideresFaltantes > 0) {
+            const custoLideres = extrasLideresFaltantes * valorLider;
+            extrasAgrupados.push({
+                funcao: "Líder Extra", amount: extrasLideresFaltantes, unitario: valorLider,
+                area: "Supervisão de Fluxo de Produção", horario: horarioLider, custoTotalItem: custoLideres
+            });
+            custoTotal += custoLideres;
+        }
+
+        const tabelaCorpo = document.getElementById('tabelaCorpo');
+        tabelaCorpo.innerHTML = ""; 
+
+        if (extrasAgrupados.length === 0) {
+            tabelaCorpo.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--success); font-weight: bold; padding: 30px;">🎉 Equipe fixa da casa é suficiente! Sem necessidade de contratações.</td></tr>`;
+        } else {
+            extrasAgrupados.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${item.funcao}</strong></td>
+                    <td style="text-align: center; font-weight: bold; color: var(--primary); font-size: 16px;">${item.amount}x</td>
+                    <td style="text-align: right;">R$ ${item.unitario.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                    <td style="font-size: 13px; color: var(--text-muted); max-width: 250px; line-height: 1.4;">${item.area}</td>
+                    <td>${item.horario}</td>
+                    <td style="text-align: right; font-weight: 700;">R$ ${item.custoTotalItem.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                `;
+                tabelaCorpo.appendChild(tr);
+            });
+        }
+
+        document.getElementById('resumoPeriodo').innerText = periodoSelecionado;
+        document.getElementById('resumoPublico').innerText = `${totalHospedes} (${qtdAdultos} Ad / ${qtdCriancas} Cr)`;
+        document.getElementById('resumoDemanda').innerText = `${demandaCozinheirosTotal} Coz. ${demandaLideresTotal > 0 ? '+ ' + demandaLideresTotal + ' Líd.' : ''}`;
+        document.getElementById('resumoFixo').innerText = `${fixosCozinha} Coz. + ${fixosLider} Líd.`;
+        document.getElementById('tituloRelatorio').innerText = `ESCALA DE EXTRAS - ${periodoSelecionado.toUpperCase()} - ${dataFormatada}`;
+        document.getElementById('custoTotal').innerText = `R$ ${custoTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+        
+        const badge = document.getElementById('badgeStatus');
+        if (totalHospedes > 400) {
+            badge.innerText = `Alta Ocupação (${totalHospedes} Pax)`;
+            badge.style.backgroundColor = "#e11d48"; 
+        } else {
+            badge.innerText = `Ocupação Normal (${totalHospedes} Pax)`;
+            badge.style.backgroundColor = "var(--primary)"; 
+        }
+
+        document.getElementById('resultadoBox').style.display = 'block';
+        document.getElementById('btnImprimir').style.display = 'inline-flex';
+
+        if (salvarNoHistorico) {
+            const novaEscala = {
+                id: Date.now(), data: dataFormatada, dataOriginal: dataInput, periodo: periodoSelecionado,
+                adultos: qtdAdultos, criancas: qtdCriancas, buffet: pontosBuffet,
+                fixosCozinha: fixosCozinha, fixosLider: fixosLider, totalValor: custoTotal, totalHospedes: totalHospedes
+            };
+            let historico = JSON.parse(localStorage.getItem('historicoEscalas')) || [];
+            historico = historico.filter(item => !(item.data === novaEscala.data && item.periodo === novaEscala.periodo));
+            historico.push(novaEscala);
+            localStorage.setItem('historicoEscalas', JSON.stringify(historico));
+            renderizarHistorico();
+        }
+    }
+
+    function renderizarHistorico() {
+        const historico = JSON.parse(localStorage.getItem('historicoEscalas')) || [];
+        const historicoCorpo = document.getElementById('historicoCorpo');
+        historicoCorpo.innerHTML = "";
+
+        if (historico.length === 0) {
+            historicoCorpo.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">Nenhuma escala gravada no histórico ainda.</td></tr>`;
+            return;
+        }
+
+        historico.sort((a, b) => b.id - a.id).forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${item.data}</strong></td>
+                <td>${item.periodo}</td>
+                <td style="text-align: center;">${item.totalHospedes} Pax</td>
+                <td style="text-align: right; font-weight: bold; color: var(--primary)">R$ ${item.totalValor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                <td style="text-align: center; display: flex; gap: 8px; justify-content: center;">
+                    <button class="btn-ver btn-acao-hist" onclick="restaurarEscala(${item.id})">🔍 Ver</button>
+                    <button class="btn-del btn-acao-hist" onclick="deletarHistorico(${item.id})">🗑️</button>
+                </td>
+            `;
+            historicoCorpo.appendChild(tr);
+        });
+    }
+
+    function restaurarEscala(id) {
+        const historico = JSON.parse(localStorage.getItem('historicoEscalas')) || [];
+        const escala = historico.find(item => item.id === id);
+
+        if (escala) {
+            document.getElementById('dataEscala').value = escala.dataOriginal;
+            document.getElementById('periodo').value = escala.periodo;
+            document.getElementById('adultos').value = escala.adultos;
+            document.getElementById('criancas').value = escala.criancas;
+            
+            const buffetSelect = document.getElementById('buffet');
+            buffetSelect.disabled = true;
+            buffetSelect.value = escala.buffet;
+
+            document.getElementById('fixosCozinha').value = escala.fixosCozinha;
+            document.getElementById('fixosLider').value = escala.fixosLider;
+
+            calcularEscala(false);
+            document.getElementById('resultadoBox').scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    function deletarHistorico(id) {
+        if(confirm("Tem certeza que deseja excluir esta escala do histórico?")) {
+            let historico = JSON.parse(localStorage.getItem('historicoEscalas')) || [];
+            historico = historico.filter(item => item.id !== id);
+            localStorage.setItem('historicoEscalas', JSON.stringify(historico));
+            renderizarHistorico();
+        }
+    }
+
+    function exportarBackup() {
+        const historico = JSON.parse(localStorage.getItem('historicoEscalas')) || [];
+        if(historico.length === 0) { alert("Não há dados para exportar."); return; }
+        let csvContent = "\uFEFFID,DataFormatada,DataOriginal,Periodo,Adultos,Criancas,Buffet,FixosCozinha,FixosLider,TotalValor,TotalHospedes\n";
+        historico.forEach(item => {
+            csvContent += `${item.id},${item.data},${item.dataOriginal},"${item.periodo}",${item.adultos},${item.criancas},${item.buffet},${item.fixosCozinha},${item.fixosLider},${item.totalValor},${item.totalHospedes}\n`;
+        });
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `backup_escalas_bourbon_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    }
+
+    function importarBackup(event) {
+        const file = event.target.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const rows = e.target.result.split('\n');
+            let historicoImportado = [];
+            for (let i = 1; i < rows.length; i++) {
+                if (!rows[i].trim()) continue;
+                const cols = rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                if (cols.length >= 11) {
+                    historicoImportado.push({
+                        id: parseInt(cols[0]), data: cols[1], dataOriginal: cols[2], periodo: cols[3].replace(/"/g, ''),
+                        adultos: parseInt(cols[4]), criancas: parseInt(cols[5]), buffet: cols[6],
+                        fixosCozinha: parseInt(cols[7]), fixosLider: parseInt(cols[8]), totalValor: parseFloat(cols[9]), totalHospedes: parseInt(cols[10])
+                    });
+                }
+            }
+            if (historicoImportado.length > 0 && confirm(`Deseja importar ${historicoImportado.length} registros?`)) {
+                let atual = JSON.parse(localStorage.getItem('historicoEscalas')) || [];
+                historicoImportado.forEach(n => { atual = atual.filter(i => i.id !== n.id); atual.push(n); });
+                localStorage.setItem('historicoEscalas', JSON.stringify(atual)); renderizarHistorico();
+                alert("Banco de dados atualizado!");
+            }
+        };
+        reader.readAsText(file); event.target.value = '';
+    }
+</script>
+</body>
+</html>
