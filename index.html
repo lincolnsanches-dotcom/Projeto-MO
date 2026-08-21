@@ -1826,9 +1826,29 @@
         console.log("Dados gravados com sucesso na nuvem!");
       }).catch(function(err) {
         console.error("Erro ao salvar no banco:", err);
+      });// Função global para salvar no banco
+    window.salvarNoFirebase = function(dados) {
+      database.ref('historico_pedidos').push({
+        ...dados,
+        dataRegistro: new Date().toLocaleString("pt-BR")
+      }).then(function() {
+        console.log("Dados gravados com sucesso na nuvem!");
+      }).catch(function(err) {
+        console.error("Erro ao salvar no banco:", err);
       });
     };
+
+    // LER DADOS DA NUVEM EM TEMPO REAL
+    database.ref('historico_pedidos').on('value', function(snapshot) {
+      var dadosDoFirebase = snapshot.val();
+      console.log("Histórico vindo da nuvem:", dadosDoFirebase);
+
+      if (dadosDoFirebase && typeof renderizarHistorico === "function") {
+        renderizarHistorico(Object.values(dadosDoFirebase));
+      }
+    });
   </script>
+ 
 
 
 </body>
