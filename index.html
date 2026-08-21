@@ -1795,46 +1795,40 @@
         document.body.removeChild(link);
               
 </script>
-<!-- BANCO DE DADOS FIREBASE (NÃO ALTERA NADA DO CÓDIGO ANTERIOR) -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+<!-- BANCO DE DADOS FIREBASE -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-  // Suas chaves de conexão
-  const firebaseConfig = {
-    apiKey: "AIzaSyAQyjjVt13sfYHdjXZr2fZM_4QEBVEwHUQ",
-    authDomain: "projeto-mo-5d64d.firebaseapp.com",
-    databaseURL: "https://projeto-mo-5d64d-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "projeto-mo-5d64d",
-    storageBucket: "projeto-mo-5d64d.firebasestorage.app",
-    messagingSenderId: "1048967299029",
-    appId: "1:1048967299029:web:e9042c020cd2b7ff0d875c"
-  };
+  <script>
+    // Configuração do Firebase
+    var firebaseConfig = {
+      apiKey: "AIzaSyAQyjjVt13sfYHdjXZr2fZM_4QEBVEwHUQ",
+      authDomain: "projeto-mo-5d64d.firebaseapp.com",
+      databaseURL: "https://projeto-mo-5d64d-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "projeto-mo-5d64d",
+      storageBucket: "projeto-mo-5d64d.firebasestorage.app",
+      messagingSenderId: "1048967299029",
+      appId: "1:1048967299029:web:e9042c020cd2b7ff0d875c"
+    };
 
-  // Inicializa o Firebase
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+    // Inicializa o Firebase
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    var database = firebase.database();
 
-  // Torna a função global para que qualquer botão ou script do seu código possa usá-la
-  window.salvarNoFirebase = function(dados) {
-    const historicoRef = ref(db, 'historico');
-    push(historicoRef, {
-      ...dados,
-      dataCriacao: new Date().toLocaleString("pt-BR")
-    }).then(() => {
-      console.log("Dados gravados com sucesso na nuvem!");
-    }).catch((err) => {
-      console.error("Erro ao salvar no banco:", err);
-    });
-  };
-
-  // Opcional: Escutar alteracoes em tempo real do banco
-  const historicoRef = ref(db, 'historico');
-  onValue(historicoRef, (snapshot) => {
-    const dados = snapshot.val();
-    console.log("Historico carregado do Firebase:", dados);
-  });
-</script>
+    // Função global para salvar no banco
+    window.salvarNoFirebase = function(dados) {
+      database.ref('historico_pedidos').push({
+        ...dados,
+        dataRegistro: new Date().toLocaleString("pt-BR")
+      }).then(function() {
+        console.log("Dados gravados com sucesso na nuvem!");
+      }).catch(function(err) {
+        console.error("Erro ao salvar no banco:", err);
+      });
+    };
+  </script>
 
 
 </body>
