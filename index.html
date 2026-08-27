@@ -452,6 +452,21 @@
         .btn-tbl-excel { background-color: #16a34a; color: white; }
         .btn-tbl-del { background-color: #f87171; color: white; }
         .btn-tbl-del:hover { background-color: #dc2626; }
+
+        /* Estilos do Editor de Regras */
+        .bloco-faixa-config {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        .linha-cargo-config {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 6px;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
@@ -462,7 +477,8 @@
             <h2>🏢 Dimensionamento Semanal A&B</h2>
             <p>Validação do Quadro Geral e Geração do Pedido Valorizado</p>
         </div>
-        <div style="display: flex; align-items: center; gap: 15px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <button class="btn-historico-topo" onclick="abrirModalRegras()">⚙️ Configurar Regras</button>
             <button class="btn-historico-topo" onclick="abrirModalHistorico()">📜 Histórico de Pedidos</button>
             <div style="font-family: 'Georgia', serif; font-size: 18px; font-weight: bold; color: #005a36; border-left: 3px solid #005a36; padding-left: 12px;">
                 BOURBON
@@ -597,6 +613,7 @@
     </div>
 </div>
 
+<!-- MODAL HISTÓRICO -->
 <div class="modal-overlay" id="modalHistorico">
     <div class="modal-conteudo">
         <div class="modal-header">
@@ -607,7 +624,58 @@
     </div>
 </div>
 
+<!-- MODAL CONFIGURADOR DE REGRAS -->
+<div class="modal-overlay" id="modalRegras">
+    <div class="modal-conteudo">
+        <div class="modal-header">
+            <h3 style="margin: 0; color: var(--primary);">📐 Regras de Dimensionamento por Local</h3>
+            <button onclick="fecharModalRegras()" style="background:none; border:none; font-size:18px; cursor:pointer; font-weight:bold;">✕</button>
+        </div>
+        
+        <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+            <div class="campo">
+                <label>SELECIONE O LOCAL:</label>
+                <select id="cfgSelectLocal" onchange="carregarRegrasNaInterface()"></select>
+            </div>
+            <div class="campo">
+                <label>SELECIONE O TURNO:</label>
+                <select id="cfgSelectTurno" onchange="carregarRegrasNaInterface()">
+                    <option value="manha">Manhã (Café)</option>
+                    <option value="tarde">Tarde (Almoço/Jantar)</option>
+                    <option value="madrugada">Madrugada / Noite</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="containerFaixasConfig"></div>
+
+        <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+            <button class="btn-add-funcao" onclick="adicionarNovaFaixaConfig()">➕ Adicionar Nova Faixa de PAX</button>
+            <button class="btn-acao btn-gravar" onclick="salvarRegrasNoFirebase()">💾 Salvar Parametrização</button>
+        </div>
+    </div>
+</div>
+
+<!-- FIREBASE SDKs -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
 <script>
+    var firebaseConfig = {
+      apiKey: "AIzaSyAQyjjVt13sfYHdjXZr2fZM_4QEBVEwHUQ",
+      authDomain: "projeto-mo-5d64d.firebaseapp.com",
+      databaseURL: "https://projeto-mo-5d64d-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "projeto-mo-5d64d",
+      storageBucket: "projeto-mo-5d64d.firebasestorage.app",
+      messagingSenderId: "1048967299029",
+      appId: "1:1048967299029:web:e9042c020cd2b7ff0d875c"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    var database = firebase.database();
+
     const VALORES_PADRAO_DIARIA = {
         "Confeiteiro": 180.00,
         "Garde Manger": 160.00,
@@ -647,16 +715,36 @@
         { nome: "Almoxarifado", tipo: "almoxarifado" }
     ];
 
+    let REGRAS_CONFIGURADAS = {};
+    let faixasEdicaoTemp = [];
     let dadosSemana = [];
     let diaAtivoIndex = 0;
     let setoresAbertos = {};
     let relatorioAtualDados = { resumo: [], detalhamento: [] };
 
     window.onload = function() {
+        popularSelectSetoresModal();
         inicializarDadosSemana();
         renderizarAbas();
         carregarDiaAtivo();
+
+        // Ouve regras em tempo real do Firebase
+        database.ref('regras_dimensionamento').on('value', function(snapshot) {
+            if (snapshot.exists()) {
+                REGRAS_CONFIGURADAS = snapshot.val();
+                recalcularCargosDosSetores();
+                renderizarSetoresDiaAtivo();
+            }
+        });
     };
+
+    function popularSelectSetoresModal() {
+        const select = document.getElementById('cfgSelectLocal');
+        select.innerHTML = "";
+        LISTA_SETORES.forEach(s => {
+            select.innerHTML += `<option value="${s.tipo}">${s.nome}</option>`;
+        });
+    }
 
     function obterPaxParaSetorETurno(setor, turnoKey, diaAtivo) {
         if (setor.paxReserva && setor.paxReserva.ativo) {
@@ -666,306 +754,36 @@
         return (parseInt(paxGlobalTurno.adultos) || 0) + (parseInt(paxGlobalTurno.criancas) || 0);
     }
 
+    // CÁLCULO DINÂMICO USANDO AS REGRAS DO FIREBASE
     function calcularCargosPorSetor(setorObjeto, diaAtivo) {
         if (!setorObjeto.operando) return { manha: [], tarde: [], madrugada: [] };
-        
-        let manha = [], tarde = [], madrugada = [];
 
-        const criarCargo = (nome, entrada = "07:00", qtd = 1) => ({
-            nome: nome,
-            entrada: entrada,
-            exigido: qtd,
-            fixo: 0,
-            fracionamentos: []
+        let resultado = { manha: [], tarde: [], madrugada: [] };
+        const tipoSetor = setorObjeto.tipo;
+        const regrasSetor = REGRAS_CONFIGURADAS[tipoSetor];
+
+        if (!regrasSetor) return resultado;
+
+        ['manha', 'tarde', 'madrugada'].forEach(turnoKey => {
+            if (setorObjeto.turnosAtivos[turnoKey] && regrasSetor[turnoKey]) {
+                const paxAtual = obterPaxParaSetorETurno(setorObjeto, turnoKey, diaAtivo);
+                const faixas = [...regrasSetor[turnoKey]].sort((a, b) => parseInt(a.pax_limite) - parseInt(b.pax_limite));
+
+                const faixaCorrespondente = faixas.find(f => paxAtual <= parseInt(f.pax_limite)) || faixas[faixas.length - 1];
+
+                if (faixaCorrespondente && faixaCorrespondente.cargos) {
+                    resultado[turnoKey] = faixaCorrespondente.cargos.map(item => ({
+                        nome: item.nome,
+                        entrada: item.entrada || HORARIOS_POR_TURNO[turnoKey][0],
+                        exigido: parseInt(item.quantidade) || 0,
+                        fixo: 0,
+                        fracionamentos: []
+                    }));
+                }
+            }
         });
 
-        // --- MANHÃ (CAFÉ) ---
-        if (setorObjeto.turnosAtivos.manha) {
-            const paxManha = obterPaxParaSetorETurno(setorObjeto, 'manha', diaAtivo);
-
-            switch(setorObjeto.tipo) {
-                case "restaurante_tom":
-                case "restaurante_food_court":
-                    if (paxManha <= 300) {
-                        manha = [
-                            criarCargo("Garde Manger", "06:00", 2),
-                            criarCargo("Confeiteiro", "05:00", 1),
-                            criarCargo("Cozinheiro", "06:00", 7),
-                            criarCargo("Líder", "06:00", 1),
-                            criarCargo("Steward", "06:00", 11)
-                        ];
-                    } else {
-                        manha = [
-                            criarCargo("Garde Manger", "06:00", 3),
-                            criarCargo("Confeiteiro", "05:00", 2),
-                            criarCargo("Cozinheiro", "06:00", 9),
-                            criarCargo("Líder", "06:00", 1),
-                            criarCargo("Steward", "06:00", 11)
-                        ];
-                    }
-                    break;
-
-                case "restaurante_kibo":
-                    manha = [criarCargo("Sushiman", "07:00", 2)];
-                    break;
-
-                case "restaurante_cave":
-                    if (paxManha <= 40) {
-                        manha = [
-                            criarCargo("Cozinheiro", "06:00", 1),
-                            criarCargo("Steward", "07:00", 1)
-                        ];
-                    } else {
-                        manha = [
-                            criarCargo("Cozinheiro", "06:00", 2),
-                            criarCargo("Steward", "07:00", 1)
-                        ];
-                    }
-                    break;
-
-                case "restaurante_vezzoso":
-                    manha = [
-                        criarCargo("Garde Manger", "06:00", 1),
-                        criarCargo("Pizzaiolo", "07:00", 1),
-                        criarCargo("Cozinheiro", "06:00", 3),
-                        criarCargo("Steward", "07:00", 2)
-                    ];
-                    break;
-
-                case "banquetes":
-                    let cozinheirosBanqM = 2;
-                    if (paxManha > 200) {
-                        cozinheirosBanqM += Math.ceil((paxManha - 200) / 100);
-                    }
-                    manha = [
-                        criarCargo("Líder", "07:00", 1),
-                        criarCargo("Cozinheiro", "07:00", cozinheirosBanqM),
-                        criarCargo("Steward", "07:00", 1)
-                    ];
-                    break;
-
-                case "sport_park":
-                    if (paxManha <= 300) {
-                        manha = [
-                            criarCargo("Cozinheiro", "07:00", 3),
-                            criarCargo("Garde Manger", "07:00", 1),
-                            criarCargo("Confeiteiro", "06:00", 1),
-                            criarCargo("Líder", "07:00", 1),
-                            criarCargo("Steward", "07:00", 2)
-                        ];
-                    } else if (paxManha <= 499) {
-                        manha = [
-                            criarCargo("Cozinheiro", "07:00", 4),
-                            criarCargo("Garde Manger", "07:00", 1),
-                            criarCargo("Confeiteiro", "06:00", 1),
-                            criarCargo("Líder", "07:00", 1),
-                            criarCargo("Steward", "07:00", 2)
-                        ];
-                    } else {
-                        manha = [
-                            criarCargo("Cozinheiro", "07:00", 5),
-                            criarCargo("Garde Manger", "07:00", 2),
-                            criarCargo("Confeiteiro", "06:00", 2),
-                            criarCargo("Líder", "07:00", 1),
-                            criarCargo("Steward", "07:00", 2)
-                        ];
-                    }
-                    break;
-
-                case "sport_park_giragrill":
-                    if (paxManha <= 300) {
-                        manha = [
-                            criarCargo("Churrasqueiro", "07:00", 1),
-                            criarCargo("Cozinheiro", "07:00", 3),
-                            criarCargo("Confeiteiro", "06:00", 1),
-                            criarCargo("Garde Manger", "07:00", 1),
-                            criarCargo("Líder", "07:00", 1),
-                            criarCargo("Steward", "07:00", 2)
-                        ];
-                    } else {
-                        manha = [
-                            criarCargo("Churrasqueiro", "07:00", 2),
-                            criarCargo("Cozinheiro", "07:00", 5),
-                            criarCargo("Garde Manger", "07:00", 2),
-                            criarCargo("Confeiteiro", "06:00", 2),
-                            criarCargo("Líder", "07:00", 1),
-                            criarCargo("Steward", "07:00", 2)
-                        ];
-                    }
-                    break;
-
-                case "acqua_kids":
-                case "room_service":
-                case "almoxarifado":
-                    manha = [criarCargo("Cozinheiro", "07:00", 1)];
-                    break;
-
-                case "refeitorio":
-                    manha = [
-                        criarCargo("Cozinheiro", "06:00", 3),
-                        criarCargo("Steward", "07:00", 1)
-                    ];
-                    break;
-
-                default:
-                    manha = [criarCargo("Steward", "07:00", 1)];
-                    break;
-            }
-        }
-
-        // --- TARDE (ALMOÇO / JANTAR) ---
-        if (setorObjeto.turnosAtivos.tarde) {
-            const paxTarde = obterPaxParaSetorETurno(setorObjeto, 'tarde', diaAtivo);
-
-            switch(setorObjeto.tipo) {
-                case "restaurante_tom":
-                case "restaurante_food_court":
-                    if (paxTarde <= 300) {
-                        tarde = [
-                            criarCargo("Garde Manger", "15:00", 2),
-                            criarCargo("Confeiteiro", "14:00", 1),
-                            criarCargo("Cozinheiro", "15:00", 7),
-                            criarCargo("Líder", "15:00", 1),
-                            criarCargo("Pizzaiolo", "16:00", 1),
-                            criarCargo("Steward", "15:00", 11)
-                        ];
-                    } else {
-                        tarde = [
-                            criarCargo("Garde Manger", "15:00", 3),
-                            criarCargo("Confeiteiro", "14:00", 2),
-                            criarCargo("Cozinheiro", "15:00", 9),
-                            criarCargo("Líder", "15:00", 1),
-                            criarCargo("Pizzaiolo", "16:00", 2),
-                            criarCargo("Steward", "15:00", 11)
-                        ];
-                    }
-                    break;
-
-                case "restaurante_kibo":
-                    tarde = [criarCargo("Sushiman", "16:00", 2)];
-                    break;
-
-                case "restaurante_cave":
-                    if (paxTarde <= 40) {
-                        tarde = [
-                            criarCargo("Cozinheiro", "15:00", 1),
-                            criarCargo("Steward", "15:00", 1)
-                        ];
-                    } else {
-                        tarde = [
-                            criarCargo("Cozinheiro", "15:00", 2),
-                            criarCargo("Steward", "15:00", 1)
-                        ];
-                    }
-                    break;
-
-                case "restaurante_vezzoso":
-                    tarde = [
-                        criarCargo("Garde Manger", "15:00", 1),
-                        criarCargo("Pizzaiolo", "16:00", 1),
-                        criarCargo("Cozinheiro", "15:00", 3),
-                        criarCargo("Steward", "15:00", 2)
-                    ];
-                    break;
-
-                case "banquetes":
-                    let cozinheirosBanqT = 2;
-                    if (paxTarde > 200) {
-                        cozinheirosBanqT += Math.ceil((paxTarde - 200) / 100);
-                    }
-                    tarde = [
-                        criarCargo("Líder", "15:00", 1),
-                        criarCargo("Cozinheiro", "15:00", cozinheirosBanqT),
-                        criarCargo("Steward", "15:00", 1)
-                    ];
-                    break;
-
-                case "sport_park":
-                    if (paxTarde <= 300) {
-                        tarde = [
-                            criarCargo("Cozinheiro", "15:00", 3),
-                            criarCargo("Garde Manger", "15:00", 1),
-                            criarCargo("Confeiteiro", "14:00", 1),
-                            criarCargo("Líder", "15:00", 1),
-                            criarCargo("Steward", "15:00", 2)
-                        ];
-                    } else if (paxTarde <= 499) {
-                        tarde = [
-                            criarCargo("Cozinheiro", "15:00", 4),
-                            criarCargo("Garde Manger", "15:00", 1),
-                            criarCargo("Confeiteiro", "14:00", 1),
-                            criarCargo("Líder", "15:00", 1),
-                            criarCargo("Steward", "15:00", 2)
-                        ];
-                    } else {
-                        tarde = [
-                            criarCargo("Cozinheiro", "15:00", 5),
-                            criarCargo("Garde Manger", "15:00", 2),
-                            criarCargo("Confeiteiro", "14:00", 2),
-                            criarCargo("Líder", "15:00", 1),
-                            criarCargo("Steward", "15:00", 2)
-                        ];
-                    }
-                    break;
-
-                case "sport_park_giragrill":
-                    if (paxTarde <= 300) {
-                        tarde = [
-                            criarCargo("Churrasqueiro", "12:00", 1),
-                            criarCargo("Cozinheiro", "15:00", 3),
-                            criarCargo("Confeiteiro", "14:00", 1),
-                            criarCargo("Garde Manger", "15:00", 1),
-                            criarCargo("Líder", "15:00", 1),
-                            criarCargo("Steward", "15:00", 2)
-                        ];
-                    } else {
-                        tarde = [
-                            criarCargo("Churrasqueiro", "12:00", 2),
-                            criarCargo("Cozinheiro", "15:00", 5),
-                            criarCargo("Garde Manger", "15:00", 2),
-                            criarCargo("Confeiteiro", "14:00", 2),
-                            criarCargo("Líder", "15:00", 1),
-                            criarCargo("Steward", "15:00", 2)
-                        ];
-                    }
-                    break;
-
-                case "acqua_kids":
-                case "room_service":
-                case "almoxarifado":
-                    tarde = [criarCargo("Cozinheiro", "15:00", 1)];
-                    break;
-
-                case "refeitorio":
-                    tarde = [
-                        criarCargo("Cozinheiro", "15:00", 2),
-                        criarCargo("Steward", "15:00", 1)
-                    ];
-                    break;
-
-                default:
-                    tarde = [criarCargo("Steward", "15:00", 1)];
-                    break;
-            }
-        }
-
-        // --- MADRUGADA / NOITE ---
-        if (setorObjeto.turnosAtivos.madrugada) {
-            if (setorObjeto.tipo === "restaurante_tom" || setorObjeto.tipo === "restaurante_food_court") {
-                madrugada = [
-                    criarCargo("Líder", "22:00", 1),
-                    criarCargo("Cozinheiro", "22:00", 4),
-                    criarCargo("Steward", "00:00", 11)
-                ];
-            } else {
-                madrugada = [
-                    criarCargo("Cozinheiro", "22:00", 1),
-                    criarCargo("Steward", "00:00", 1)
-                ];
-            }
-        }
-
-        return { manha, tarde, madrugada };
+        return resultado;
     }
 
     function inicializarDadosSemana() {
@@ -1027,7 +845,7 @@
             btn.onclick = () => trocardia(index);
             btn.innerHTML = `
                 <span class="dia-nome">${dia.diaNome}</span>
-                <span class="dia-pax">${totalPaxCafes} PAX (Café)</span>
+                <span class="dia-pax">${totalPaxCafes} PAX </span>
             `;
             container.appendChild(btn);
         });
@@ -1125,14 +943,7 @@
                 const calculados = calcularCargosPorSetor(setor, diaAtivo);
                 ['manha', 'tarde', 'madrugada'].forEach(turnoKey => {
                     if (setor.turnosAtivos[turnoKey]) {
-                        calculados[turnoKey].forEach((novoCargo, idx) => {
-                            if (setor.cargos[turnoKey] && setor.cargos[turnoKey][idx]) {
-                                setor.cargos[turnoKey][idx].exigido = novoCargo.exigido;
-                            } else {
-                                if(!setor.cargos[turnoKey]) setor.cargos[turnoKey] = [];
-                                setor.cargos[turnoKey].push(novoCargo);
-                            }
-                        });
+                        setor.cargos[turnoKey] = calculados[turnoKey] || [];
                     }
                 });
             }
@@ -1596,9 +1407,7 @@
         };
 
         renderizarTabelasRelatorio(relatorioAtualDados);
-
         document.getElementById('secaoPedidoValorizado').style.display = 'block';
-        // document.getElementById('secaoPedidoValorizado').scrollIntoView({ behavior: 'smooth' });
     }
 
     function renderizarTabelasRelatorio(dados) {
@@ -1638,36 +1447,33 @@
     }
 
     function gravarPedidoAtual() {
-    if (!relatorioAtualDados.resumo || relatorioAtualDados.resumo.length === 0) {
-        alert('Gere primeiro o pedido antes de gravar!');
-        return;
+        if (!relatorioAtualDados.resumo || relatorioAtualDados.resumo.length === 0) {
+            alert('Gere primeiro o pedido antes de gravar!');
+            return;
+        }
+
+        const diaAtivo = dadosSemana[diaAtivoIndex];
+        
+        const novoPedido = {
+            id: Date.now(),
+            data: diaAtivo.data,
+            diaNome: diaAtivo.diaNome,
+            qtdExtras: relatorioAtualDados.totalQtdExtras,
+            custoTotal: relatorioAtualDados.totalCustoGeral,
+            resumo: relatorioAtualDados.resumo,
+            detalhamento: relatorioAtualDados.detalhamento
+        };
+
+        const pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
+        pedidos.push(novoPedido);
+        localStorage.setItem('pedidos_bourbon', JSON.stringify(pedidos));
+
+        if (typeof window.salvarNoFirebase === 'function') {
+            window.salvarNoFirebase(novoPedido);
+        }
+
+        alert('Pedido gravado com sucesso no Histórico e na Nuvem!');
     }
-
-    const diaAtivo = dadosSemana[diaAtivoIndex];
-    
-    const novoPedido = {
-        id: Date.now(),
-        data: diaAtivo.data,
-        diaNome: diaAtivo.diaNome,
-        qtdExtras: relatorioAtualDados.totalQtdExtras,
-        custoTotal: relatorioAtualDados.totalCustoGeral,
-        resumo: relatorioAtualDados.resumo,
-        detalhamento: relatorioAtualDados.detalhamento
-    };
-
-    // Salva localmente no navegador
-    const pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
-    pedidos.push(novoPedido);
-    localStorage.setItem('pedidos_bourbon', JSON.stringify(pedidos));
-
-    // Salva na nuvem (Firebase)
-    if (typeof window.salvarNoFirebase === 'function') {
-        window.salvarNoFirebase(novoPedido);
-    }
-
-    alert('Pedido gravado com sucesso no Histórico e na Nuvem!');
-}
-    
 
     function abrirModalHistorico() {
         const modal = document.getElementById('modalHistorico');
@@ -1771,75 +1577,157 @@
     }
 
     function exportarExcelPedidoSalvo(id) {
-    const pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
-    const ped = pedidos.find(p => p.id === id);
-    if (!ped) {
-        alert('Pedido não encontrado!');
-        return;
+        const pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
+        const ped = pedidos.find(p => p.id === id);
+        if (!ped) {
+            alert('Pedido não encontrado!');
+            return;
+        }
+
+        let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+        csvContent += `RELATORIO DE PEDIDO - ${ped.diaNome.toUpperCase()} (${ped.data})\n`;
+        csvContent += `Custo Total: R$ ${ped.custoTotal.toFixed(2).replace('.', ',')}\n\n`;
+        csvContent += "Item;Qtd Folha;Extras;Status;Custo Total\n";
+
+        ped.resumo.forEach(item => {
+            csvContent += `"${item.nome}";${item.qtdFolha};${item.qtdExtras};"${item.status}";"R$ ${item.custoTotal.toFixed(2).replace('.', ',')}"\n`;
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Pedido_${ped.diaNome}_${ped.data}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
-    let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-    csvContent += `RELATORIO DE PEDIDO - ${ped.diaNome.toUpperCase()} (${ped.data})\n`;
-    csvContent += `Custo Total: R$ ${ped.custoTotal.toFixed(2).replace('.', ',')}\n\n`;
-    csvContent += "Item;Qtd Folha;Extras;Status;Custo Total\n";
-
-    ped.resumo.forEach(item => {
-        csvContent += `"${item.nome}";${item.qtdFolha};${item.qtdExtras};"${item.status}";"R$ ${item.custoTotal.toFixed(2).replace('.', ',')}"\n`;
-    });
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Pedido_${ped.diaNome}_${ped.data}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
-</script>
-<!-- BANCO DE DADOS FIREBASE -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
-  <script>
-    // Configuração do Firebase
-    var firebaseConfig = {
-      apiKey: "AIzaSyAQyjjVt13sfYHdjXZr2fZM_4QEBVEwHUQ",
-      authDomain: "projeto-mo-5d64d.firebaseapp.com",
-      databaseURL: "https://projeto-mo-5d64d-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "projeto-mo-5d64d",
-      storageBucket: "projeto-mo-5d64d.firebasestorage.app",
-      messagingSenderId: "1048967299029",
-      appId: "1:1048967299029:web:e9042c020cd2b7ff0d875c"
-    };
-
-    // Inicializa o Firebase
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
+    // OPERAÇÕES DO MODAL DE REGRA (PAX E CARGOS CONFIGURÁVEIS)
+    function abrirModalRegras() {
+        document.getElementById('modalRegras').style.display = 'flex';
+        carregarRegrasNaInterface();
     }
-    var database = firebase.database();
+
+    function fecharModalRegras() {
+        document.getElementById('modalRegras').style.display = 'none';
+    }
+
+    function carregarRegrasNaInterface() {
+        const local = document.getElementById('cfgSelectLocal').value;
+        const turno = document.getElementById('cfgSelectTurno').value;
+
+        if (REGRAS_CONFIGURADAS[local] && REGRAS_CONFIGURADAS[local][turno]) {
+            faixasEdicaoTemp = JSON.parse(JSON.stringify(REGRAS_CONFIGURADAS[local][turno]));
+        } else {
+            faixasEdicaoTemp = [
+                {
+                    pax_limite: 300,
+                    cargos: [{ nome: "Cozinheiro", entrada: "06:00", quantidade: 1 }]
+                }
+            ];
+        }
+        renderizarFaixasConfig();
+    }
+
+    function renderizarFaixasConfig() {
+        const container = document.getElementById('containerFaixasConfig');
+        const turno = document.getElementById('cfgSelectTurno').value;
+        container.innerHTML = "";
+
+        faixasEdicaoTemp.forEach((faixa, fIdx) => {
+            let html = `
+                <div class="bloco-faixa-config">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <div style="font-weight:bold; color:var(--primary);">
+                            Faixa ${fIdx + 1}: Até 
+                            <input type="number" value="${faixa.pax_limite}" style="width:100px; display:inline-block;" onchange="faixasEdicaoTemp[${fIdx}].pax_limite = parseInt(this.value)||0"> 
+                            PAX
+                        </div>
+                        <button class="btn-tbl-acao btn-tbl-del" onclick="removerFaixaConfig(${fIdx})">🗑️ Excluir Faixa</button>
+                    </div>
+            `;
+
+            (faixa.cargos || []).forEach((c, cIdx) => {
+                html += `
+                    <div class="linha-cargo-config">
+                        <select onchange="faixasEdicaoTemp[${fIdx}].cargos[${cIdx}].nome = this.value">
+                            ${Object.keys(VALORES_PADRAO_DIARIA).map(f => `<option value="${f}" ${f === c.nome ? 'selected' : ''}>${f}</option>`).join('')}
+                        </select>
+                        <select onchange="faixasEdicaoTemp[${fIdx}].cargos[${cIdx}].entrada = this.value">
+                            ${HORARIOS_POR_TURNO[turno].map(h => `<option value="${h}" ${h === c.entrada ? 'selected' : ''}>${h}</option>`).join('')}
+                        </select>
+                        <input type="number" value="${c.quantidade}" min="0" style="width:80px;" onchange="faixasEdicaoTemp[${fIdx}].cargos[${cIdx}].quantidade = parseInt(this.value)||0">
+                        <button class="btn-del-linha" style="width:36px; height:36px;" onclick="removerCargoConfig(${fIdx}, ${cIdx})">✕</button>
+                    </div>
+                `;
+            });
+
+            html += `
+                    <button class="btn-add-funcao" style="margin-top:5px;" onclick="adicionarCargoConfig(${fIdx})">➕ Adicionar Cargo na Faixa</button>
+                </div>
+            `;
+            container.innerHTML += html;
+        });
+    }
+
+    function adicionarNovaFaixaConfig() {
+        faixasEdicaoTemp.push({
+            pax_limite: 9999,
+            cargos: [{ nome: "Cozinheiro", entrada: "06:00", quantidade: 1 }]
+        });
+        renderizarFaixasConfig();
+    }
+
+    function removerFaixaConfig(fIdx) {
+        faixasEdicaoTemp.splice(fIdx, 1);
+        renderizarFaixasConfig();
+    }
+
+    function adicionarCargoConfig(fIdx) {
+        const turno = document.getElementById('cfgSelectTurno').value;
+        faixasEdicaoTemp[fIdx].cargos.push({
+            nome: "Cozinheiro",
+            entrada: HORARIOS_POR_TURNO[turno][0],
+            quantidade: 1
+        });
+        renderizarFaixasConfig();
+    }
+
+    function removerCargoConfig(fIdx, cIdx) {
+        faixasEdicaoTemp[fIdx].cargos.splice(cIdx, 1);
+        renderizarFaixasConfig();
+    }
+
+    function salvarRegrasNoFirebase() {
+        const local = document.getElementById('cfgSelectLocal').value;
+        const turno = document.getElementById('cfgSelectTurno').value;
+
+        database.ref(`regras_dimensionamento/${local}/${turno}`).set(faixasEdicaoTemp)
+            .then(() => {
+                alert("Parametrização de regras salva com sucesso!");
+                fecharModalRegras();
+            })
+            .catch(err => {
+                alert("Erro ao salvar regras: " + err.message);
+            });
+    }
 
     window.salvarNoFirebase = function(dados) {
-    database.ref('historico_pedidos').push({
-        ...dados,
-        dataRegistro: new Date().toLocaleString("pt-BR")
-    }).then(function() {
-        console.log("Dados gravados com sucesso na nuvem!");
-    }).catch(function(err) {
-        console.error("Erro ao salvar no banco:", err);
-    });
-};
+        database.ref('historico_pedidos').push({
+            ...dados,
+            dataRegistro: new Date().toLocaleString("pt-BR")
+        }).catch(function(err) {
+            console.error("Erro ao salvar no banco:", err);
+        });
+    };
 
-// LER DADOS DA NUVEM EM TEMPO REAL E ATUALIZAR O HISTÓRICO LOCAL
-database.ref('historico_pedidos').on('value', function(snapshot) {
-    var dadosDoFirebase = snapshot.val();
-    if (dadosDoFirebase) {
-        var listaPedidos = Object.values(dadosDoFirebase);
-        // Atualiza a chave correta do sistema
-        localStorage.setItem('pedidos_bourbon', JSON.stringify(listaPedidos));
-        console.log("Histórico sincronizado com sucesso da nuvem!");
-    }
-});
+    database.ref('historico_pedidos').on('value', function(snapshot) {
+        var dadosDoFirebase = snapshot.val();
+        if (dadosDoFirebase) {
+            var listaPedidos = Object.values(dadosDoFirebase);
+            localStorage.setItem('pedidos_bourbon', JSON.stringify(listaPedidos));
+        }
+    });
 </script>
- 
 </body>
 </html>

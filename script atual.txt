@@ -52,6 +52,32 @@
         .header h2 { color: var(--primary); margin: 0 0 5px 0; font-size: 22px; font-weight: 700; }
         .header p { color: var(--text-muted); margin: 0; font-size: 13px; }
 
+        /* NAVEGAÇÃO PRINCIPAL (ABAS DE MÓDULOS) */
+        .nav-modulos {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        .btn-nav {
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 700;
+            border: none;
+            background: #e2e8f0;
+            color: #475569;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-nav.ativo {
+            background: var(--primary);
+            color: white;
+        }
+
         .btn-historico-topo {
             background-color: #334155;
             color: white;
@@ -121,9 +147,7 @@
             padding: 10px;
         }
 
-        .bloco-pax-turno.sincronizado {
-            border-left: 3px solid var(--primary);
-        }
+        .bloco-pax-turno.sincronizado { border-left: 3px solid var(--primary); }
 
         .titulo-pax-turno {
             font-size: 11px;
@@ -234,17 +258,8 @@
             margin-bottom: 15px;
         }
 
-        .grid-inputs-reserva {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-top: 8px;
-        }
-
-        .grid-inputs-reserva .campo {
-            flex: 1;
-            min-width: 180px;
-        }
+        .grid-inputs-reserva { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+        .grid-inputs-reserva .campo { flex: 1; min-width: 180px; }
 
         .turno-bloco { background: white; border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin-bottom: 12px; }
         .turno-titulo { 
@@ -321,18 +336,10 @@
             transition: all 0.2s;
         }
 
-        .btn-add-fracao {
-            background: #e0f2fe;
-            color: #0284c7;
-            border: 1px solid #bae6fd;
-        }
+        .btn-add-fracao { background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; }
         .btn-add-fracao:hover { background: #0284c7; color: white; }
 
-        .btn-del-linha {
-            background: #fee2e2;
-            color: #dc2626;
-            border: 1px solid #fca5a5;
-        }
+        .btn-del-linha { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; }
         .btn-del-linha:hover { background: #dc2626; color: white; }
 
         .btn-add-funcao {
@@ -451,7 +458,44 @@
         .btn-tbl-ver { background-color: #0284c7; color: white; }
         .btn-tbl-excel { background-color: #16a34a; color: white; }
         .btn-tbl-del { background-color: #f87171; color: white; }
-        .btn-tbl-del:hover { background-color: #dc2626; }
+
+        /* ESTILOS DA ABA DE REGRAS E CONFIGURAÇÃO */
+        .card-regra {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .card-regra h3 { margin-top: 0; color: var(--primary); font-size: 16px; }
+        
+        .grid-faixa-pax {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        
+        .linha-cargo-regra {
+            display: grid;
+            grid-template-columns: 2fr 1fr 40px;
+            gap: 10px;
+            align-items: center;
+            margin-top: 6px;
+        }
+
+        .btn-salvar-regras {
+            background-color: var(--success);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
@@ -470,130 +514,175 @@
         </div>
     </div>
 
-    <div class="semana-tabs" id="containerAbasSemana"></div>
+    <!-- NAVEGAÇÃO DE MÓDULOS (ESCALA vs CONFIGURAÇÃO) -->
+    <div class="nav-modulos">
+        <button class="btn-nav ativo" id="btnNavEscala" onclick="alternarModulo('escala')">📅 Escala e Dimensionamento</button>
+        <button class="btn-nav" id="btnNavRegras" onclick="alternarModulo('regras')">⚙️ Regras e Variáveis dos Locais</button>
+    </div>
 
-    <div class="topo-card">
-        <div class="pax-turnos-grid">
-            <div class="campo">
-                <label for="dataEscala">Data da Operação:</label>
-                <input type="date" id="dataEscala" onchange="atualizarDataDiaAtual()">
+    <!-- MÓDULO 1: ESCALA (SISTEMA PRINCIPAL) -->
+    <div id="moduloEscala">
+        <div class="semana-tabs" id="containerAbasSemana"></div>
+
+        <div class="topo-card">
+            <div class="pax-turnos-grid">
+                <div class="campo">
+                    <label for="dataEscala">Data da Operação:</label>
+                    <input type="date" id="dataEscala" onchange="atualizarDataDiaAtual()">
+                </div>
+
+                <!-- PAX MANHÃ -->
+                <div class="bloco-pax-turno">
+                    <div class="titulo-pax-turno">☕ Manhã (Café)</div>
+                    <div style="display: flex; gap: 6px;">
+                        <div class="campo">
+                            <label>Adultos</label>
+                            <input type="number" id="paxManhaAd" value="500" min="0" onchange="atualizarPaxGlobal()">
+                        </div>
+                        <div class="campo">
+                            <label>Crianças</label>
+                            <input type="number" id="paxManhaCr" value="0" min="0" onchange="atualizarPaxGlobal()">
+                        </div>
+                    </div>
+                    <div style="font-size: 11px; font-weight: bold; color: var(--primary); margin-top: 6px; text-align: right;" id="lblTotalPaxManha">
+                        500 PAX
+                    </div>
+                </div>
+
+                <!-- PAX TARDE -->
+                <div class="bloco-pax-turno">
+                    <div class="titulo-pax-turno">☀️ Tarde (Almoço)</div>
+                    <div style="display: flex; gap: 6px;">
+                        <div class="campo">
+                            <label>Adultos</label>
+                            <input type="number" id="paxTardeAd" value="350" min="0" onchange="atualizarPaxGlobal(true)">
+                        </div>
+                        <div class="campo">
+                            <label>Crianças</label>
+                            <input type="number" id="paxTardeCr" value="0" min="0" onchange="atualizarPaxGlobal(true)">
+                        </div>
+                    </div>
+                    <div style="font-size: 11px; font-weight: bold; color: var(--primary); margin-top: 6px; text-align: right;" id="lblTotalPaxTarde">
+                        350 PAX
+                    </div>
+                </div>
+
+                <!-- PAX MADRUGADA -->
+                <div class="bloco-pax-turno sincronizado">
+                    <div class="titulo-pax-turno">
+                        <span>🌙 Madrugada / Noite</span>
+                    </div>
+                    <div style="display: flex; gap: 6px;">
+                        <div class="campo">
+                            <label>Adultos</label>
+                            <input type="number" id="paxMadrugadaAd" value="350" min="0" onchange="atualizarPaxGlobal()">
+                        </div>
+                        <div class="campo">
+                            <label>Crianças</label>
+                            <input type="number" id="paxMadrugadaCr" value="0" min="0" onchange="atualizarPaxGlobal()">
+                        </div>
+                    </div>
+                    <div style="font-size: 11px; font-weight: bold; color: var(--primary); margin-top: 6px; text-align: right;" id="lblTotalPaxMadrugada">
+                        350 PAX
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="containerSetores"></div>
+
+        <button class="btn-gerar-relatorio" id="btnGerarRelatorio" disabled onclick="abrirPedidoValorizado()">
+            🔒 Sinalize todos os locais para liberar o pedido
+        </button>
+
+        <div class="secao-pedido-valorizado" id="secaoPedidoValorizado">
+            <h3 style="color:var(--primary); margin-top:0;">📋 Pedido de Extras Valorizado (Confirmado)</h3>
+            
+            <div class="sub-tabs-relatorio">
+                <button class="btn-subtab ativa" id="subTabResumo" onclick="alternarSubTab('resumo')">📊 Resumo por Função e Turno</button>
+                <button class="btn-subtab" id="subTabDetalhamento" onclick="alternarSubTab('detalhamento')">🏢 Detalhamento por Locais</button>
             </div>
 
-            <!-- PAX MANHÃ -->
-            <div class="bloco-pax-turno">
-                <div class="titulo-pax-turno">☕ Manhã (Café)</div>
-                <div style="display: flex; gap: 6px;">
-                    <div class="campo">
-                        <label>Adultos</label>
-                        <input type="number" id="paxManhaAd" value="500" min="0" onchange="atualizarPaxGlobal()">
-                    </div>
-                    <div class="campo">
-                        <label>Crianças</label>
-                        <input type="number" id="paxManhaCr" value="0" min="0" onchange="atualizarPaxGlobal()">
-                    </div>
-                </div>
-                <div style="font-size: 11px; font-weight: bold; color: var(--primary); margin-top: 6px; text-align: right;" id="lblTotalPaxManha">
-                    500 PAX
-                </div>
+            <div id="conteudoSubTabResumo">
+                <table class="tabela-custom">
+                    <thead>
+                        <tr>
+                            <th>Cargo / Função</th>
+                            <th>Turno</th>
+                            <th>Horário(s) Entrada (Qtd)</th>
+                            <th>Qtd Extras</th>
+                            <th>Valor Diária (R$)</th>
+                            <th>Subtotal (R$)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpoTabelaValores"></tbody>
+                </table>
             </div>
 
-            <!-- PAX TARDE -->
-            <div class="bloco-pax-turno">
-                <div class="titulo-pax-turno">☀️ Tarde (Almoço)</div>
-                <div style="display: flex; gap: 6px;">
-                    <div class="campo">
-                        <label>Adultos</label>
-                        <input type="number" id="paxTardeAd" value="350" min="0" onchange="atualizarPaxGlobal(true)">
-                    </div>
-                    <div class="campo">
-                        <label>Crianças</label>
-                        <input type="number" id="paxTardeCr" value="0" min="0" onchange="atualizarPaxGlobal(true)">
-                    </div>
-                </div>
-                <div style="font-size: 11px; font-weight: bold; color: var(--primary); margin-top: 6px; text-align: right;" id="lblTotalPaxTarde">
-                    350 PAX
-                </div>
+            <div id="conteudoSubTabDetalhamento" style="display: none;">
+                <table class="tabela-custom">
+                    <thead>
+                        <tr>
+                            <th>Local / Setor</th>
+                            <th>Turno</th>
+                            <th>Cargo / Função</th>
+                            <th>Qtd Extra</th>
+                            <th>Entrada</th>
+                            <th>Valor Diária (R$)</th>
+                            <th>Subtotal (R$)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpoTabelaDetalhamento"></tbody>
+                </table>
             </div>
 
-            <!-- PAX MADRUGADA -->
-            <div class="bloco-pax-turno sincronizado">
-                <div class="titulo-pax-turno">
-                    <span>🌙 Madrugada / Noite</span>
-                </div>
-                <div style="display: flex; gap: 6px;">
-                    <div class="campo">
-                        <label>Adultos</label>
-                        <input type="number" id="paxMadrugadaAd" value="350" min="0" onchange="atualizarPaxGlobal()">
-                    </div>
-                    <div class="campo">
-                        <label>Crianças</label>
-                        <input type="number" id="paxMadrugadaCr" value="0" min="0" onchange="atualizarPaxGlobal()">
-                    </div>
-                </div>
-                <div style="font-size: 11px; font-weight: bold; color: var(--primary); margin-top: 6px; text-align: right;" id="lblTotalPaxMadrugada">
-                    350 PAX
-                </div>
+            <div class="card-totais-financeiros">
+                <span>Total de Pessoas Extras: <span id="lblTotalExtrasQtde">0</span></span>
+                <span>Custo Geral Estimado: R$ <span id="lblTotalCustoReais">0,00</span></span>
+            </div>
+
+            <div class="acoes-relatorio">
+                <button class="btn-acao btn-gravar" onclick="gravarPedidoAtual()">💾 Gravar Pedido</button>
+                <button class="btn-acao btn-excel" onclick="exportarExcelPedidoAtual()">📊 Exportar para Excel</button>
+                <button class="btn-acao" style="background:var(--primary); color:white;" onclick="window.print()">🖨️ Imprimir Pedido</button>
             </div>
         </div>
     </div>
 
-    <div id="containerSetores"></div>
-
-    <button class="btn-gerar-relatorio" id="btnGerarRelatorio" disabled onclick="abrirPedidoValorizado()">
-        🔒 Sinalize todos os locais para liberar o pedido
-    </button>
-
-    <div class="secao-pedido-valorizado" id="secaoPedidoValorizado">
-        <h3 style="color:var(--primary); margin-top:0;">📋 Pedido de Extras Valorizado (Confirmado)</h3>
-        
-        <div class="sub-tabs-relatorio">
-            <button class="btn-subtab ativa" id="subTabResumo" onclick="alternarSubTab('resumo')">📊 Resumo por Função e Turno</button>
-            <button class="btn-subtab" id="subTabDetalhamento" onclick="alternarSubTab('detalhamento')">🏢 Detalhamento por Locais</button>
+    <!-- MÓDULO 2: GESTÃO DE REGRAS E VARIÁVEIS -->
+    <div id="moduloRegras" style="display: none;">
+        <div class="card-regra">
+            <h3>💰 Cadastro de Cargos e Valores de Diárias (R$)</h3>
+            <p style="font-size: 12px; color: var(--text-muted);">Altere o valor padrão pago para cada cargo por dia de trabalho extra.</p>
+            <div id="containerValoresDiarias"></div>
+            <button class="btn-add-funcao" onclick="adicionarNovoCargoDiaria()">➕ Adicionar Novo Cargo</button>
         </div>
 
-        <div id="conteudoSubTabResumo">
-            <table class="tabela-custom">
-                <thead>
-                    <tr>
-                        <th>Cargo / Função</th>
-                        <th>Turno</th>
-                        <th>Horário(s) Entrada (Qtd)</th>
-                        <th>Qtd Extras</th>
-                        <th>Valor Diária (R$)</th>
-                        <th>Subtotal (R$)</th>
-                    </tr>
-                </thead>
-                <tbody id="corpoTabelaValores"></tbody>
-            </table>
+        <div class="card-regra">
+            <h3>📐 Regras de Dimensionamento por Local</h3>
+            <p style="font-size: 12px; color: var(--text-muted);">Selecione o local e o turno para parametrizar quantas pessoas cada faixa de PAX exige.</p>
+            
+            <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                <div class="campo">
+                    <label>Selecione o Local:</label>
+                    <select id="selRegraSetor" onchange="carregarRegrasSetorSelecionado()"></select>
+                </div>
+                <div class="campo">
+                    <label>Selecione o Turno:</label>
+                    <select id="selRegraTurno" onchange="carregarRegrasSetorSelecionado()">
+                        <option value="manha">Manhã (Café)</option>
+                        <option value="tarde">Tarde (Almoço/Jantar)</option>
+                        <option value="madrugada">Madrugada/Noite</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="containerFaixasPaxSetor"></div>
+            
+            <button class="btn-add-funcao" onclick="adicionarNovaFaixaPax()">➕ Adicionar Faixa de PAX</button>
         </div>
 
-        <div id="conteudoSubTabDetalhamento" style="display: none;">
-            <table class="tabela-custom">
-                <thead>
-                    <tr>
-                        <th>Local / Setor</th>
-                        <th>Turno</th>
-                        <th>Cargo / Função</th>
-                        <th>Qtd Extra</th>
-                        <th>Entrada</th>
-                        <th>Valor Diária (R$)</th>
-                        <th>Subtotal (R$)</th>
-                    </tr>
-                </thead>
-                <tbody id="corpoTabelaDetalhamento"></tbody>
-            </table>
-        </div>
-
-        <div class="card-totais-financeiros">
-            <span>Total de Pessoas Extras: <span id="lblTotalExtrasQtde">0</span></span>
-            <span>Custo Geral Estimado: R$ <span id="lblTotalCustoReais">0,00</span></span>
-        </div>
-
-        <div class="acoes-relatorio">
-            <button class="btn-acao btn-gravar" onclick="gravarPedidoAtual()">💾 Gravar Pedido</button>
-            <button class="btn-acao btn-excel" onclick="exportarExcelPedidoAtual()">📊 Exportar para Excel</button>
-            <button class="btn-acao" style="background:var(--primary); color:white;" onclick="window.print()">🖨️ Imprimir Pedido</button>
-        </div>
+        <button class="btn-salvar-regras" onclick="salvarTodasRegrasNuvem()">💾 Salvar Regras no Sistema (Nuvem)</button>
     </div>
 </div>
 
@@ -608,7 +697,8 @@
 </div>
 
 <script>
-    const VALORES_PADRAO_DIARIA = {
+    // REGRAS E DIÁRIAS PADRÃO (PODEM SER SOBREPOSTAS VIA FIREBASE)
+    let VALORES_PADRAO_DIARIA = {
         "Confeiteiro": 180.00,
         "Garde Manger": 160.00,
         "Cozinheiro": 180.00,
@@ -634,16 +724,35 @@
 
     const LISTA_SETORES = [
         { nome: "Restaurante TOM", tipo: "restaurante_tom" },
+        { nome: "Restaurante Food Court", tipo: "restaurante_food_court" },
         { nome: "Restaurante KIBÔ", tipo: "restaurante_kibo" },
         { nome: "Restaurante Cave", tipo: "restaurante_cave" },
         { nome: "Restaurante Vezzoso", tipo: "restaurante_vezzoso" },
-        { nome: "Restaurante Food Court", tipo: "restaurante_foodcourt" },
         { nome: "Banquetes", tipo: "banquetes" },
         { nome: "Sport Park", tipo: "sport_park" },
+        { nome: "Sport Park Gira Grill", tipo: "sport_park_giragrill" },
         { nome: "Acqua Kids", tipo: "acqua_kids" },
         { nome: "Room Service", tipo: "room_service" },
+        { nome: "Refeitório", tipo: "refeitorio" },
         { nome: "Almoxarifado", tipo: "almoxarifado" }
     ];
+
+    // ESTRUTURA DINÂMICA DE REGRAS POR LOCAL
+    let REGRAS_LOCAIS = {
+        "restaurante_tom": {
+            manha: [
+                { paxMax: 300, exigencias: [{ cargo: "Garde Manger", qtd: 2 }, { cargo: "Confeiteiro", qtd: 1 }, { cargo: "Cozinheiro", qtd: 7 }, { cargo: "Líder", qtd: 1 }, { cargo: "Steward", qtd: 11 }] },
+                { paxMax: 9999, exigencias: [{ cargo: "Garde Manger", qtd: 3 }, { cargo: "Confeiteiro", qtd: 2 }, { cargo: "Cozinheiro", qtd: 9 }, { cargo: "Líder", qtd: 1 }, { cargo: "Steward", qtd: 11 }] }
+            ],
+            tarde: [
+                { paxMax: 300, exigencias: [{ cargo: "Garde Manger", qtd: 2 }, { cargo: "Confeiteiro", qtd: 1 }, { cargo: "Cozinheiro", qtd: 7 }, { cargo: "Líder", qtd: 1 }, { cargo: "Pizzaiolo", qtd: 1 }, { cargo: "Steward", qtd: 11 }] },
+                { paxMax: 9999, exigencias: [{ cargo: "Garde Manger", qtd: 3 }, { cargo: "Confeiteiro", qtd: 2 }, { cargo: "Cozinheiro", qtd: 9 }, { cargo: "Líder", qtd: 1 }, { cargo: "Pizzaiolo", qtd: 2 }, { cargo: "Steward", qtd: 11 }] }
+            ],
+            madrugada: [
+                { paxMax: 9999, exigencias: [{ cargo: "Líder", qtd: 1 }, { cargo: "Cozinheiro", qtd: 4 }, { cargo: "Steward", qtd: 11 }] }
+            ]
+        }
+    };
 
     let dadosSemana = [];
     let diaAtivoIndex = 0;
@@ -654,7 +763,20 @@
         inicializarDadosSemana();
         renderizarAbas();
         carregarDiaAtivo();
+        preencherSeletorSetoresRegras();
     };
+
+    function alternarModulo(modulo) {
+        document.getElementById('moduloEscala').style.display = modulo === 'escala' ? 'block' : 'none';
+        document.getElementById('moduloRegras').style.display = modulo === 'regras' ? 'block' : 'none';
+
+        document.getElementById('btnNavEscala').className = `btn-nav ${modulo === 'escala' ? 'ativo' : ''}`;
+        document.getElementById('btnNavRegras').className = `btn-nav ${modulo === 'regras' ? 'ativo' : ''}`;
+
+        if (modulo === 'regras') {
+            renderizarAbaRegras();
+        }
+    }
 
     function obterPaxParaSetorETurno(setor, turnoKey, diaAtivo) {
         if (setor.paxReserva && setor.paxReserva.ativo) {
@@ -664,188 +786,40 @@
         return (parseInt(paxGlobalTurno.adultos) || 0) + (parseInt(paxGlobalTurno.criancas) || 0);
     }
 
+    // LÓGICA REESTRUTURADA: LÊ AS REGRAS DINÂMICAS DA ABA DE CONFIGURAÇÃO
     function calcularCargosPorSetor(setorObjeto, diaAtivo) {
         if (!setorObjeto.operando) return { manha: [], tarde: [], madrugada: [] };
         
-        let manha = [], tarde = [], madrugada = [];
+        let resultado = { manha: [], tarde: [], madrugada: [] };
 
-        const criarCargo = (nome, entrada = "07:00", qtd = 1) => ({
+        const criarCargo = (nome, qtd = 1, turnoKey = 'manha') => ({
             nome: nome,
-            entrada: entrada,
+            entrada: HORARIOS_POR_TURNO[turnoKey][0], // Horário padrão editável na escala
             exigido: qtd,
             fixo: 0,
             fracionamentos: []
         });
 
-        // --- MANHÃ (CAFÉ) ---
-        if (setorObjeto.turnosAtivos.manha) {
-            const paxManha = obterPaxParaSetorETurno(setorObjeto, 'manha', diaAtivo);
+        ['manha', 'tarde', 'madrugada'].forEach(turnoKey => {
+            if (setorObjeto.turnosAtivos[turnoKey]) {
+                const paxTotal = obterPaxParaSetorETurno(setorObjeto, turnoKey, diaAtivo);
+                const regrasSetor = REGRAS_LOCAIS[setorObjeto.tipo] && REGRAS_LOCAIS[setorObjeto.tipo][turnoKey];
 
-            switch(setorObjeto.tipo) {
-                case "restaurante_tom":
-                    if (paxManha <= 300) {
-                        manha = [
-                            criarCargo("Garde Manger", "06:00", 2),
-                            criarCargo("Confeiteiro", "05:00", 1),
-                            criarCargo("Cozinheiro", "06:00", 7),
-                            criarCargo("Líder", "06:00", 1)
-                        ];
-                    } else {
-                        manha = [
-                            criarCargo("Garde Manger", "06:00", 3),
-                            criarCargo("Confeiteiro", "05:00", 2),
-                            criarCargo("Cozinheiro", "06:00", 9),
-                            criarCargo("Líder", "06:00", 1)
-                        ];
-                    }
-                    break;
-
-                case "restaurante_kibo":
-                    manha = [criarCargo("Sushiman", "07:00")];
-                    break;
-
-                case "restaurante_vezzoso":
-                    manha = [
-                        criarCargo("Cozinheiro", "06:00"),
-                        criarCargo("Confeiteiro", "05:00"),
-                        criarCargo("Garde Manger", "06:00"),
-                        criarCargo("Líder", "06:00")
-                    ];
-                    break;
-
-                case "restaurante_cave":
-                case "acqua_kids":
-                case "room_service":
-                    manha = [criarCargo("Cozinheiro", "06:00")];
-                    break;
-
-                case "restaurante_foodcourt":
-                    manha = [
-                        criarCargo("Cozinheiro", "06:00"),
-                        criarCargo("Confeiteiro", "05:00"),
-                        criarCargo("Garde Manger", "06:00"),
-                        criarCargo("Líder", "06:00")
-                    ];
-                    break;
-
-                case "banquetes":
-                    manha = [criarCargo("Steward", "07:00")];
-                    break;
-
-                case "sport_park":
-                    manha = [
-                        criarCargo("Cozinheiro", "07:00"),
-                        criarCargo("Confeiteiro", "06:00"),
-                        criarCargo("Garde Manger", "07:00"),
-                        criarCargo("Pizzaiolo", "07:00"),
-                        criarCargo("Líder", "07:00")
-                    ];
-                    break;
-
-                case "almoxarifado":
-                    manha = [
-                        criarCargo("Carregador", "08:00"),
-                        criarCargo("Steward", "08:00")
-                    ];
-                    break;
-
-                default:
-                    manha = [criarCargo("Steward", "07:00")];
-                    break;
+                if (regrasSetor && regrasSetor.length > 0) {
+                    // Busca a faixa de PAX correspondente
+                    const faixa = regrasSetor.find(f => paxTotal <= f.paxMax) || regrasSetor[regrasSetor.length - 1];
+                    faixa.exigencias.forEach(ex => {
+                        resultado[turnoKey].push(criarCargo(ex.cargo, ex.qtd, turnoKey));
+                    });
+                } else {
+                    // Regra Genérica para locais sem parametrização customizada
+                    resultado[turnoKey].push(criarCargo("Cozinheiro", 1, turnoKey));
+                    resultado[turnoKey].push(criarCargo("Steward", 1, turnoKey));
+                }
             }
-        }
+        });
 
-        // --- TARDE (ALMOÇO / JANTAR) ---
-        if (setorObjeto.turnosAtivos.tarde) {
-            const paxTarde = obterPaxParaSetorETurno(setorObjeto, 'tarde', diaAtivo);
-
-            switch(setorObjeto.tipo) {
-                case "restaurante_tom":
-                    if (paxTarde <= 300) {
-                        tarde = [
-                            criarCargo("Garde Manger", "15:00", 2),
-                            criarCargo("Confeiteiro", "14:00", 1),
-                            criarCargo("Cozinheiro", "15:00", 7),
-                            criarCargo("Líder", "15:00", 1),
-                            criarCargo("Pizzaiolo", "16:00", 1)
-                        ];
-                    } else {
-                        tarde = [
-                            criarCargo("Garde Manger", "15:00", 3),
-                            criarCargo("Confeiteiro", "14:00", 2),
-                            criarCargo("Cozinheiro", "15:00", 9),
-                            criarCargo("Líder", "15:00", 1),
-                            criarCargo("Pizzaiolo", "16:00", 2)
-                        ];
-                    }
-                    break;
-
-                case "restaurante_kibo":
-                    tarde = [criarCargo("Sushiman", "16:00")];
-                    break;
-
-                case "restaurante_vezzoso":
-                    tarde = [
-                        criarCargo("Cozinheiro", "15:00"),
-                        criarCargo("Confeiteiro", "14:00"),
-                        criarCargo("Garde Manger", "15:00"),
-                        criarCargo("Pizzaiolo", "16:00"),
-                        criarCargo("Líder", "15:00")
-                    ];
-                    break;
-
-                case "restaurante_cave":
-                case "acqua_kids":
-                case "room_service":
-                    tarde = [criarCargo("Cozinheiro", "15:00")];
-                    break;
-
-                case "restaurante_foodcourt":
-                    tarde = [
-                        criarCargo("Cozinheiro", "15:00"),
-                        criarCargo("Confeiteiro", "14:00"),
-                        criarCargo("Garde Manger", "15:00"),
-                        criarCargo("Churrasqueiro", "12:00"),
-                        criarCargo("Líder", "15:00")
-                    ];
-                    break;
-
-                case "banquetes":
-                    tarde = [criarCargo("Steward", "15:00")];
-                    break;
-
-                case "sport_park":
-                    tarde = [
-                        criarCargo("Cozinheiro", "15:00"),
-                        criarCargo("Confeiteiro", "14:00"),
-                        criarCargo("Garde Manger", "15:00"),
-                        criarCargo("Pizzaiolo", "16:00"),
-                        criarCargo("Líder", "15:00")
-                    ];
-                    break;
-
-                case "almoxarifado":
-                    tarde = [
-                        criarCargo("Carregador", "13:00"),
-                        criarCargo("Steward", "13:00")
-                    ];
-                    break;
-
-                default:
-                    tarde = [criarCargo("Steward", "15:00")];
-                    break;
-            }
-        }
-
-        // --- MADRUGADA / NOITE ---
-        if (setorObjeto.turnosAtivos.madrugada) {
-            madrugada = [
-                criarCargo("Cozinheiro", "22:00"),
-                criarCargo("Steward", "00:00")
-            ];
-        }
-
-        return { manha, tarde, madrugada };
+        return resultado;
     }
 
     function inicializarDadosSemana() {
@@ -873,12 +847,7 @@
                     operando: true,
                     turnosAtivos: turnosIniciais,
                     definido: false,
-                    paxReserva: {
-                        ativo: false,
-                        manha: 500,
-                        tarde: 350,
-                        madrugada: 350
-                    }
+                    paxReserva: { ativo: false, manha: 500, tarde: 350, madrugada: 350 }
                 };
                 setorObj.cargos = calcularCargosPorSetor(setorObj, mockDia);
                 estruturaSetores[itemSetor.nome] = setorObj;
@@ -1025,9 +994,7 @@
         if (el) el.style.display = setoresAbertos[nomeSetor] ? 'block' : 'none';
     }
 
-    function sanitizarId(str) {
-        return str.replace(/[^a-zA-Z0-9]/g, '_');
-    }
+    function sanitizarId(str) { return str.replace(/[^a-zA-Z0-9]/g, '_'); }
 
     function alterarStatusOperacao(nomeSetor, statusOperando) {
         const diaAtivo = dadosSemana[diaAtivoIndex];
@@ -1264,7 +1231,7 @@
     function adicionarNovoCargo(nomeSetor, turnoKey) {
         const diaAtivo = dadosSemana[diaAtivoIndex];
         const novo = {
-            nome: "Cozinheiro",
+            nome: Object.keys(VALORES_PADRAO_DIARIA)[0] || "Cozinheiro",
             entrada: HORARIOS_POR_TURNO[turnoKey][0],
             exigido: 1,
             fixo: 0,
@@ -1476,9 +1443,7 @@
         };
 
         renderizarTabelasRelatorio(relatorioAtualDados);
-
         document.getElementById('secaoPedidoValorizado').style.display = 'block';
-        document.getElementById('secaoPedidoValorizado').scrollIntoView({ behavior: 'smooth' });
     }
 
     function renderizarTabelasRelatorio(dados) {
@@ -1524,9 +1489,8 @@
         }
 
         const diaAtivo = dadosSemana[diaAtivoIndex];
-        const pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
         
-        const novopedido = {
+        const novoPedido = {
             id: Date.now(),
             data: diaAtivo.data,
             diaNome: diaAtivo.diaNome,
@@ -1536,9 +1500,15 @@
             detalhamento: relatorioAtualDados.detalhamento
         };
 
-        pedidos.push(novopedido);
+        const pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
+        pedidos.push(novoPedido);
         localStorage.setItem('pedidos_bourbon', JSON.stringify(pedidos));
-        alert('Pedido gravado com sucesso no Histórico!');
+
+        if (typeof window.salvarNoFirebase === 'function') {
+            window.salvarNoFirebase(novoPedido);
+        }
+
+        alert('Pedido gravado com sucesso no Histórico e na Nuvem!');
     }
 
     function abrirModalHistorico() {
@@ -1642,40 +1612,182 @@
         document.body.removeChild(link);
     }
 
-    function exportarExcelPedidoSalvo(id) {
-        const pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
-        const ped = pedidos.find(p => p.id === id);
-        if(!ped) return;
+    /* --- LÓGICA DE GERENCIAMENTO DA ABA DE REGRAS E VARIÁVEIS --- */
+    function preencherSeletorSetoresRegras() {
+        const sel = document.getElementById('selRegraSetor');
+        sel.innerHTML = "";
+        LISTA_SETORES.forEach(s => {
+            sel.innerHTML += `<option value="${s.tipo}">${s.nome}</option>`;
+        });
+    }
 
-        let csvContent = "data:text/csv;charset=utf-8,Cargo / Funcao;Turno;Horario(s) Entrada (Qtd);Qtd Extras;Valor Diaria (RS);Subtotal (RS)\n";
-        
-        if (ped.resumo) {
-            ped.resumo.forEach(item => {
-                csvContent += `"${item.cargo}";"${item.turno}";"${item.horariosTexto}";"${item.qtd}";"R$ ${item.valorDiaria.toFixed(2)}";"R$ ${item.subtotal.toFixed(2)}"\n`;
-            });
+    function renderizarAbaRegras() {
+        // 1. Renderiza os valores de Diárias
+        const containerVal = document.getElementById('containerValoresDiarias');
+        containerVal.innerHTML = "";
+        Object.keys(VALORES_PADRAO_DIARIA).forEach(cargo => {
+            containerVal.innerHTML += `
+                <div style="display:flex; gap:10px; align-items:center; margin-bottom:8px;">
+                    <input type="text" value="${cargo}" onchange="atualizarNomeCargoDiaria('${cargo}', this.value)" style="flex:2;">
+                    <input type="number" value="${VALORES_PADRAO_DIARIA[cargo]}" onchange="VALORES_PADRAO_DIARIA['${cargo}'] = parseFloat(this.value) || 0" style="flex:1;">
+                    <button class="btn-del-linha" onclick="removerCargoDiaria('${cargo}')">🗑️</button>
+                </div>
+            `;
+        });
+
+        // 2. Renderiza as faixas de PAX para o setor selecionado
+        carregarRegrasSetorSelecionado();
+    }
+
+    function atualizarNomeCargoDiaria(nomeAntigo, novoNome) {
+        if (!novoNome || nomeAntigo === novoNome) return;
+        const val = VALORES_PADRAO_DIARIA[nomeAntigo];
+        delete VALORES_PADRAO_DIARIA[nomeAntigo];
+        VALORES_PADRAO_DIARIA[novoNome] = val;
+        renderizarAbaRegras();
+    }
+
+    function adicionarNovoCargoDiaria() {
+        const novo = prompt("Digite o nome do novo cargo:");
+        if (novo && !VALORES_PADRAO_DIARIA[novo]) {
+            VALORES_PADRAO_DIARIA[novo] = 150.00;
+            renderizarAbaRegras();
         }
+    }
 
-        if (ped.detalhamento) {
-            csvContent += `\n\nDETALHAMENTO POR LOCAL\nLocal;Turno;Cargo / Funcao;Qtd Extras;Entrada;Valor Diaria (RS);Subtotal (RS)\n`;
-            ped.detalhamento.forEach(item => {
-                csvContent += `"${item.setor}";"${item.turno}";"${item.cargo}";"${item.qtd}";"${item.entrada}";"R$ ${item.valorDiaria.toFixed(2)}";"R$ ${item.subtotal.toFixed(2)}"\n`;
+    function removerCargoDiaria(cargo) {
+        delete VALORES_PADRAO_DIARIA[cargo];
+        renderizarAbaRegras();
+    }
+    function carregarRegrasSetorSelecionado() {
+    const setorTipo = document.getElementById('selRegraSetor').value;
+    const turnoKey = document.getElementById('selRegraTurno').value;
+    const container = document.getElementById('containerFaixasPaxSetor');
+    container.innerHTML = "";
+
+    if (!REGRAS_LOCAIS[setorTipo]) {
+        REGRAS_LOCAIS[setorTipo] = { manha: [], tarde: [], madrugada: [] };
+    }
+    if (!REGRAS_LOCAIS[setorTipo][turnoKey]) {
+        REGRAS_LOCAIS[setorTipo][turnoKey] = [];
+    }
+
+    const faixas = REGRAS_LOCAIS[setorTipo][turnoKey];
+
+    if (faixas.length === 0) {
+        container.innerHTML = `<p style="font-size:12px; color:var(--text-muted);">Nenhuma regra parametrizada para este turno e setor.</p>`;
+        return;
+    }
+
+    faixas.forEach((faixa, fIdx) => {
+        let htmlFaixa = `
+            <div class="grid-faixa-pax">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <strong>Faixa ${fIdx + 1}: Até <input type="number" value="${faixa.paxMax}" style="width:90px;" onchange="REGRAS_LOCAIS['${setorTipo}']['${turnoKey}'][${fIdx}].paxMax = parseInt(this.value) || 0"> PAX</strong>
+                    <button class="btn-del-linha" onclick="removerFaixaPax('${setorTipo}', '${turnoKey}', ${fIdx})">🗑️ Excluir Faixa</button>
+                </div>
+        `;
+
+        faixa.exigencias.forEach((ex, eIdx) => {
+            htmlFaixa += `
+                <div class="linha-cargo-regra">
+                    <select onchange="REGRAS_LOCAIS['${setorTipo}']['${turnoKey}'][${fIdx}].exigencias[${eIdx}].cargo = this.value">
+                        ${Object.keys(VALORES_PADRAO_DIARIA).map(c => `<option value="${c}" ${c === ex.cargo ? 'selected' : ''}>${c}</option>`).join('')}
+                    </select>
+                    <input type="number" value="${ex.qtd}" min="1" onchange="REGRAS_LOCAIS['${setorTipo}']['${turnoKey}'][${fIdx}].exigencias[${eIdx}].qtd = parseInt(this.value) || 1">
+                    <button class="btn-del-linha" onclick="removerExigenciaRegra('${setorTipo}', '${turnoKey}', ${fIdx}, ${eIdx})">✕</button>
+                </div>
+            `;
+        });
+
+        htmlFaixa += `
+                <button class="btn-add-funcao" style="margin-top:8px;" onclick="adicionarExigenciaRegra('${setorTipo}', '${turnoKey}', ${fIdx})">➕ Adicionar Cargo na Faixa</button>
+            </div>
+        `;
+
+        container.innerHTML += htmlFaixa;
+    });
+}
+
+    function adicionarExigenciaRegra(setorTipo, turnoKey, fIdx) {
+        REGRAS_LOCAIS[setorTipo][turnoKey][fIdx].exigencias.push({
+            cargo: Object.keys(VALORES_PADRAO_DIARIA)[0] || "Cozinheiro",
+            qtd: 1
+        });
+        carregarRegrasSetorSelecionado();
+    }
+
+    function removerExigenciaRegra(setorTipo, turnoKey, fIdx, eIdx) {
+        REGRAS_LOCAIS[setorTipo][turnoKey][fIdx].exigencias.splice(eIdx, 1);
+        carregarRegrasSetorSelecionado();
+    }
+
+    function salvarTodasRegrasNuvem() {
+        if (typeof database !== 'undefined') {
+            database.ref('configuracoes_regras').set({
+                valoresDiarias: VALORES_PADRAO_DIARIA,
+                regrasLocais: REGRAS_LOCAIS
+            }).then(() => {
+                alert("Regras e valores salvos com sucesso na nuvem!");
+                recalcularCargosDosSetores();
+                renderizarSetoresDiaAtivo();
+            }).catch(err => {
+                alert("Erro ao salvar regras: " + err.message);
             });
+        } else {
+            alert("Sua alteração foi mantida localmente!");
+            recalcularCargosDosSetores();
+            renderizarSetoresDiaAtivo();
         }
-
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `Historico_Pedido_Completo_${ped.data}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
     }
 </script>
 
+<!-- BANCO DE DADOS FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+    var firebaseConfig = {
+      apiKey: "AIzaSyAQyjjVt13sfYHdjXZr2fZM_4QEBVEwHUQ",
+      authDomain: "projeto-mo-5d64d.firebaseapp.com",
+      databaseURL: "https://projeto-mo-5d64d-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "projeto-mo-5d64d",
+      storageBucket: "projeto-mo-5d64d.firebasestorage.app",
+      messagingSenderId: "1048967299029",
+      appId: "1:1048967299029:web:e9042c020cd2b7ff0d875c"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    var database = firebase.database();
+
+    window.salvarNoFirebase = function(dados) {
+        database.ref('historico_pedidos').push({
+            ...dados,
+            dataRegistro: new Date().toLocaleString("pt-BR")
+        });
+    };
+
+    // SINCRONIZAÇÃO EM TEMPO REAL DAS REGRAS E DIÁRIAS DA NUVEM
+    database.ref('configuracoes_regras').on('value', function(snapshot) {
+        var config = snapshot.val();
+        if (config) {
+            if (config.valoresDiarias) VALORES_PADRAO_DIARIA = config.valoresDiarias;
+            if (config.regrasLocais) REGRAS_LOCAIS = config.regrasLocais;
+            recalcularCargosDosSetores();
+            renderizarSetoresDiaAtivo();
+        }
+    });
+
+    database.ref('historico_pedidos').on('value', function(snapshot) {
+        var dadosDoFirebase = snapshot.val();
+        if (dadosDoFirebase) {
+            var listaPedidos = Object.values(dadosDoFirebase);
+            localStorage.setItem('pedidos_bourbon', JSON.stringify(listaPedidos));
+        }
+    });
+</script>
 
 </body>
-<footer>
-<p>Desenvolvido por <strong>Lincoln C. Sanches</strong> &bull; Pedido de Extras &bull; Bourbon Atibaia Resort</p>
-</footer>
-
 </html>

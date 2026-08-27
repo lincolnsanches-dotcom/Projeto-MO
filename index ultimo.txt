@@ -277,6 +277,22 @@
             margin-bottom: 10px;
         }
 
+        .badge-qtd-exigido {
+            background-color: #e2e8f0;
+            color: #334155;
+            font-weight: bold;
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 13px;
+            border: 1px solid #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 36px;
+            user-select: none;
+        }
+
         .badge-qtd-extra {
             background-color: #dcfce7;
             color: #15803d;
@@ -429,8 +445,10 @@
             display: inline-flex;
             align-items: center;
             gap: 4px;
+            margin-right: 4px;
         }
 
+        .btn-tbl-ver { background-color: #0284c7; color: white; }
         .btn-tbl-excel { background-color: #16a34a; color: white; }
         .btn-tbl-del { background-color: #f87171; color: white; }
         .btn-tbl-del:hover { background-color: #dc2626; }
@@ -467,11 +485,11 @@
                 <div style="display: flex; gap: 6px;">
                     <div class="campo">
                         <label>Adultos</label>
-                        <input type="number" id="paxManhaAd" value="500" min="0" oninput="atualizarPaxGlobal()">
+                        <input type="number" id="paxManhaAd" value="500" min="0" onchange="atualizarPaxGlobal()">
                     </div>
                     <div class="campo">
                         <label>Crianças</label>
-                        <input type="number" id="paxManhaCr" value="0" min="0" oninput="atualizarPaxGlobal()">
+                        <input type="number" id="paxManhaCr" value="0" min="0" onchange="atualizarPaxGlobal()">
                     </div>
                 </div>
                 <div style="font-size: 11px; font-weight: bold; color: var(--primary); margin-top: 6px; text-align: right;" id="lblTotalPaxManha">
@@ -485,11 +503,11 @@
                 <div style="display: flex; gap: 6px;">
                     <div class="campo">
                         <label>Adultos</label>
-                        <input type="number" id="paxTardeAd" value="350" min="0" oninput="atualizarPaxGlobal(true)">
+                        <input type="number" id="paxTardeAd" value="350" min="0" onchange="atualizarPaxGlobal(true)">
                     </div>
                     <div class="campo">
                         <label>Crianças</label>
-                        <input type="number" id="paxTardeCr" value="0" min="0" oninput="atualizarPaxGlobal(true)">
+                        <input type="number" id="paxTardeCr" value="0" min="0" onchange="atualizarPaxGlobal(true)">
                     </div>
                 </div>
                 <div style="font-size: 11px; font-weight: bold; color: var(--primary); margin-top: 6px; text-align: right;" id="lblTotalPaxTarde">
@@ -505,11 +523,11 @@
                 <div style="display: flex; gap: 6px;">
                     <div class="campo">
                         <label>Adultos</label>
-                        <input type="number" id="paxMadrugadaAd" value="350" min="0" oninput="atualizarPaxGlobal()">
+                        <input type="number" id="paxMadrugadaAd" value="350" min="0" onchange="atualizarPaxGlobal()">
                     </div>
                     <div class="campo">
                         <label>Crianças</label>
-                        <input type="number" id="paxMadrugadaCr" value="0" min="0" oninput="atualizarPaxGlobal()">
+                        <input type="number" id="paxMadrugadaCr" value="0" min="0" onchange="atualizarPaxGlobal()">
                     </div>
                 </div>
                 <div style="font-size: 11px; font-weight: bold; color: var(--primary); margin-top: 6px; text-align: right;" id="lblTotalPaxMadrugada">
@@ -539,7 +557,7 @@
                     <tr>
                         <th>Cargo / Função</th>
                         <th>Turno</th>
-                        <th>Horário(s) Entrada</th>
+                        <th>Horário(s) Entrada (Qtd)</th>
                         <th>Qtd Extras</th>
                         <th>Valor Diária (R$)</th>
                         <th>Subtotal (R$)</th>
@@ -613,24 +631,26 @@
     };
 
     const NOME_TURNO_LABEL = { manha: "Manhã", tarde: "Tarde", madrugada: "Madrugada" };
-    const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
 
     const LISTA_SETORES = [
         { nome: "Restaurante TOM", tipo: "restaurante_tom" },
+        { nome: "Restaurante Food Court", tipo: "restaurante_food_court" },
         { nome: "Restaurante KIBÔ", tipo: "restaurante_kibo" },
         { nome: "Restaurante Cave", tipo: "restaurante_cave" },
-        { nome: "Restaurante Vezzoso", tipo: "restaurante_Vezzoso" },
-        { nome: "Restaurante Food Court", tipo: "restaurante_food court" },
+        { nome: "Restaurante Vezzoso", tipo: "restaurante_vezzoso" },
         { nome: "Banquetes", tipo: "banquetes" },
         { nome: "Sport Park", tipo: "sport_park" },
+        { nome: "Sport Park Gira Grill", tipo: "sport_park_giragrill" },
         { nome: "Acqua Kids", tipo: "acqua_kids" },
         { nome: "Room Service", tipo: "room_service" },
+        { nome: "Refeitório", tipo: "refeitorio" },
         { nome: "Almoxarifado", tipo: "almoxarifado" }
     ];
 
     let dadosSemana = [];
     let diaAtivoIndex = 0;
     let setoresAbertos = {};
+    let relatorioAtualDados = { resumo: [], detalhamento: [] };
 
     window.onload = function() {
         inicializarDadosSemana();
@@ -640,10 +660,10 @@
 
     function obterPaxParaSetorETurno(setor, turnoKey, diaAtivo) {
         if (setor.paxReserva && setor.paxReserva.ativo) {
-            return setor.paxReserva[turnoKey] || 0;
+            return parseInt(setor.paxReserva[turnoKey]) || 0;
         }
         const paxGlobalTurno = diaAtivo.paxGlobal[turnoKey];
-        return (paxGlobalTurno.adultos || 0) + (paxGlobalTurno.criancas || 0);
+        return (parseInt(paxGlobalTurno.adultos) || 0) + (parseInt(paxGlobalTurno.criancas) || 0);
     }
 
     function calcularCargosPorSetor(setorObjeto, diaAtivo) {
@@ -651,64 +671,298 @@
         
         let manha = [], tarde = [], madrugada = [];
 
+        const criarCargo = (nome, entrada = "07:00", qtd = 1) => ({
+            nome: nome,
+            entrada: entrada,
+            exigido: qtd,
+            fixo: 0,
+            fracionamentos: []
+        });
+
+        // --- MANHÃ (CAFÉ) ---
         if (setorObjeto.turnosAtivos.manha) {
-            const pax = obterPaxParaSetorETurno(setorObjeto, 'manha', diaAtivo);
+            const paxManha = obterPaxParaSetorETurno(setorObjeto, 'manha', diaAtivo);
+
             switch(setorObjeto.tipo) {
                 case "restaurante_tom":
-                case "restaurante_kibo":
-                case "restaurante_foodcourt":
-                    manha = [
-                        { nome: "Cozinheiro", entrada: "06:00", exigido: Math.max(1, Math.ceil(pax / 50)), fixo: 0, fracionamentos: [] },
-                        { nome: "Steward", entrada: "06:00", exigido: Math.max(1, Math.ceil(pax / 80)), fixo: 0, fracionamentos: [] }
-                    ];
+                case "restaurante_food_court":
+                    if (paxManha <= 300) {
+                        manha = [
+                            criarCargo("Garde Manger", "06:00", 2),
+                            criarCargo("Confeiteiro", "05:00", 1),
+                            criarCargo("Cozinheiro", "06:00", 7),
+                            criarCargo("Líder", "06:00", 1),
+                            criarCargo("Steward", "06:00", 11)
+                        ];
+                    } else {
+                        manha = [
+                            criarCargo("Garde Manger", "06:00", 3),
+                            criarCargo("Confeiteiro", "05:00", 2),
+                            criarCargo("Cozinheiro", "06:00", 9),
+                            criarCargo("Líder", "06:00", 1),
+                            criarCargo("Steward", "06:00", 11)
+                        ];
+                    }
                     break;
-                case "banquetes":
-                    manha = [
-                        { nome: "Líder", entrada: "07:00", exigido: 1, fixo: 0, fracionamentos: [] },
-                        { nome: "Carregador", entrada: "07:00", exigido: Math.max(1, Math.ceil(pax / 100)), fixo: 0, fracionamentos: [] }
-                    ];
-                    break;
-                case "almoxarifado":
-                    manha = [
-                        { nome: "Carregador", entrada: "08:00", exigido: Math.max(1, Math.ceil(pax / 300)), fixo: 0, fracionamentos: [] }
-                    ];
-                    break;
-                default:
-                    manha = [{ nome: "Steward", entrada: "07:00", exigido: Math.max(1, Math.ceil(pax / 60)), fixo: 0, fracionamentos: [] }];
-                    break;
-            }
-        }
 
-        if (setorObjeto.turnosAtivos.tarde) {
-            const pax = obterPaxParaSetorETurno(setorObjeto, 'tarde', diaAtivo);
-            switch(setorObjeto.tipo) {
+                case "restaurante_kibo":
+                    manha = [criarCargo("Sushiman", "07:00", 2)];
+                    break;
+
                 case "restaurante_cave":
-                case "restaurante_tom":
-                case "restaurante_kibo":
-                case "restaurante_foodcourt":
-                    tarde = [
-                        { nome: "Cozinheiro", entrada: "15:00", exigido: Math.max(1, Math.ceil(pax / 50)), fixo: 0, fracionamentos: [] },
-                        { nome: "Steward", entrada: "15:00", exigido: Math.max(1, Math.ceil(pax / 80)), fixo: 0, fracionamentos: [] }
+                    if (paxManha <= 40) {
+                        manha = [
+                            criarCargo("Cozinheiro", "06:00", 1),
+                            criarCargo("Steward", "07:00", 1)
+                        ];
+                    } else {
+                        manha = [
+                            criarCargo("Cozinheiro", "06:00", 2),
+                            criarCargo("Steward", "07:00", 1)
+                        ];
+                    }
+                    break;
+
+                case "restaurante_vezzoso":
+                    manha = [
+                        criarCargo("Garde Manger", "06:00", 1),
+                        criarCargo("Pizzaiolo", "07:00", 1),
+                        criarCargo("Cozinheiro", "06:00", 3),
+                        criarCargo("Steward", "07:00", 2)
                     ];
                     break;
+
+                case "banquetes":
+                    let cozinheirosBanqM = 2;
+                    if (paxManha > 200) {
+                        cozinheirosBanqM += Math.ceil((paxManha - 200) / 100);
+                    }
+                    manha = [
+                        criarCargo("Líder", "07:00", 1),
+                        criarCargo("Cozinheiro", "07:00", cozinheirosBanqM),
+                        criarCargo("Steward", "07:00", 1)
+                    ];
+                    break;
+
                 case "sport_park":
+                    if (paxManha <= 300) {
+                        manha = [
+                            criarCargo("Cozinheiro", "07:00", 3),
+                            criarCargo("Garde Manger", "07:00", 1),
+                            criarCargo("Confeiteiro", "06:00", 1),
+                            criarCargo("Líder", "07:00", 1),
+                            criarCargo("Steward", "07:00", 2)
+                        ];
+                    } else if (paxManha <= 499) {
+                        manha = [
+                            criarCargo("Cozinheiro", "07:00", 4),
+                            criarCargo("Garde Manger", "07:00", 1),
+                            criarCargo("Confeiteiro", "06:00", 1),
+                            criarCargo("Líder", "07:00", 1),
+                            criarCargo("Steward", "07:00", 2)
+                        ];
+                    } else {
+                        manha = [
+                            criarCargo("Cozinheiro", "07:00", 5),
+                            criarCargo("Garde Manger", "07:00", 2),
+                            criarCargo("Confeiteiro", "06:00", 2),
+                            criarCargo("Líder", "07:00", 1),
+                            criarCargo("Steward", "07:00", 2)
+                        ];
+                    }
+                    break;
+
+                case "sport_park_giragrill":
+                    if (paxManha <= 300) {
+                        manha = [
+                            criarCargo("Churrasqueiro", "07:00", 1),
+                            criarCargo("Cozinheiro", "07:00", 3),
+                            criarCargo("Confeiteiro", "06:00", 1),
+                            criarCargo("Garde Manger", "07:00", 1),
+                            criarCargo("Líder", "07:00", 1),
+                            criarCargo("Steward", "07:00", 2)
+                        ];
+                    } else {
+                        manha = [
+                            criarCargo("Churrasqueiro", "07:00", 2),
+                            criarCargo("Cozinheiro", "07:00", 5),
+                            criarCargo("Garde Manger", "07:00", 2),
+                            criarCargo("Confeiteiro", "06:00", 2),
+                            criarCargo("Líder", "07:00", 1),
+                            criarCargo("Steward", "07:00", 2)
+                        ];
+                    }
+                    break;
+
                 case "acqua_kids":
-                    tarde = [
-                        { nome: "Churrasqueiro", entrada: "12:00", exigido: Math.max(1, Math.ceil(pax / 150)), fixo: 0, fracionamentos: [] }
+                case "room_service":
+                case "almoxarifado":
+                    manha = [criarCargo("Cozinheiro", "07:00", 1)];
+                    break;
+
+                case "refeitorio":
+                    manha = [
+                        criarCargo("Cozinheiro", "06:00", 3),
+                        criarCargo("Steward", "07:00", 1)
                     ];
                     break;
+
                 default:
-                    tarde = [{ nome: "Steward", entrada: "15:00", exigido: Math.max(1, Math.ceil(pax / 60)), fixo: 0, fracionamentos: [] }];
+                    manha = [criarCargo("Steward", "07:00", 1)];
                     break;
             }
         }
 
+        // --- TARDE (ALMOÇO / JANTAR) ---
+        if (setorObjeto.turnosAtivos.tarde) {
+            const paxTarde = obterPaxParaSetorETurno(setorObjeto, 'tarde', diaAtivo);
+
+            switch(setorObjeto.tipo) {
+                case "restaurante_tom":
+                case "restaurante_food_court":
+                    if (paxTarde <= 300) {
+                        tarde = [
+                            criarCargo("Garde Manger", "15:00", 2),
+                            criarCargo("Confeiteiro", "14:00", 1),
+                            criarCargo("Cozinheiro", "15:00", 7),
+                            criarCargo("Líder", "15:00", 1),
+                            criarCargo("Pizzaiolo", "16:00", 1),
+                            criarCargo("Steward", "15:00", 11)
+                        ];
+                    } else {
+                        tarde = [
+                            criarCargo("Garde Manger", "15:00", 3),
+                            criarCargo("Confeiteiro", "14:00", 2),
+                            criarCargo("Cozinheiro", "15:00", 9),
+                            criarCargo("Líder", "15:00", 1),
+                            criarCargo("Pizzaiolo", "16:00", 2),
+                            criarCargo("Steward", "15:00", 11)
+                        ];
+                    }
+                    break;
+
+                case "restaurante_kibo":
+                    tarde = [criarCargo("Sushiman", "16:00", 2)];
+                    break;
+
+                case "restaurante_cave":
+                    if (paxTarde <= 40) {
+                        tarde = [
+                            criarCargo("Cozinheiro", "15:00", 1),
+                            criarCargo("Steward", "15:00", 1)
+                        ];
+                    } else {
+                        tarde = [
+                            criarCargo("Cozinheiro", "15:00", 2),
+                            criarCargo("Steward", "15:00", 1)
+                        ];
+                    }
+                    break;
+
+                case "restaurante_vezzoso":
+                    tarde = [
+                        criarCargo("Garde Manger", "15:00", 1),
+                        criarCargo("Pizzaiolo", "16:00", 1),
+                        criarCargo("Cozinheiro", "15:00", 3),
+                        criarCargo("Steward", "15:00", 2)
+                    ];
+                    break;
+
+                case "banquetes":
+                    let cozinheirosBanqT = 2;
+                    if (paxTarde > 200) {
+                        cozinheirosBanqT += Math.ceil((paxTarde - 200) / 100);
+                    }
+                    tarde = [
+                        criarCargo("Líder", "15:00", 1),
+                        criarCargo("Cozinheiro", "15:00", cozinheirosBanqT),
+                        criarCargo("Steward", "15:00", 1)
+                    ];
+                    break;
+
+                case "sport_park":
+                    if (paxTarde <= 300) {
+                        tarde = [
+                            criarCargo("Cozinheiro", "15:00", 3),
+                            criarCargo("Garde Manger", "15:00", 1),
+                            criarCargo("Confeiteiro", "14:00", 1),
+                            criarCargo("Líder", "15:00", 1),
+                            criarCargo("Steward", "15:00", 2)
+                        ];
+                    } else if (paxTarde <= 499) {
+                        tarde = [
+                            criarCargo("Cozinheiro", "15:00", 4),
+                            criarCargo("Garde Manger", "15:00", 1),
+                            criarCargo("Confeiteiro", "14:00", 1),
+                            criarCargo("Líder", "15:00", 1),
+                            criarCargo("Steward", "15:00", 2)
+                        ];
+                    } else {
+                        tarde = [
+                            criarCargo("Cozinheiro", "15:00", 5),
+                            criarCargo("Garde Manger", "15:00", 2),
+                            criarCargo("Confeiteiro", "14:00", 2),
+                            criarCargo("Líder", "15:00", 1),
+                            criarCargo("Steward", "15:00", 2)
+                        ];
+                    }
+                    break;
+
+                case "sport_park_giragrill":
+                    if (paxTarde <= 300) {
+                        tarde = [
+                            criarCargo("Churrasqueiro", "12:00", 1),
+                            criarCargo("Cozinheiro", "15:00", 3),
+                            criarCargo("Confeiteiro", "14:00", 1),
+                            criarCargo("Garde Manger", "15:00", 1),
+                            criarCargo("Líder", "15:00", 1),
+                            criarCargo("Steward", "15:00", 2)
+                        ];
+                    } else {
+                        tarde = [
+                            criarCargo("Churrasqueiro", "12:00", 2),
+                            criarCargo("Cozinheiro", "15:00", 5),
+                            criarCargo("Garde Manger", "15:00", 2),
+                            criarCargo("Confeiteiro", "14:00", 2),
+                            criarCargo("Líder", "15:00", 1),
+                            criarCargo("Steward", "15:00", 2)
+                        ];
+                    }
+                    break;
+
+                case "acqua_kids":
+                case "room_service":
+                case "almoxarifado":
+                    tarde = [criarCargo("Cozinheiro", "15:00", 1)];
+                    break;
+
+                case "refeitorio":
+                    tarde = [
+                        criarCargo("Cozinheiro", "15:00", 2),
+                        criarCargo("Steward", "15:00", 1)
+                    ];
+                    break;
+
+                default:
+                    tarde = [criarCargo("Steward", "15:00", 1)];
+                    break;
+            }
+        }
+
+        // --- MADRUGADA / NOITE ---
         if (setorObjeto.turnosAtivos.madrugada) {
-            const pax = obterPaxParaSetorETurno(setorObjeto, 'madrugada', diaAtivo);
-            madrugada = [
-                { nome: "Cozinheiro", entrada: "22:00", exigido: Math.max(1, Math.ceil(pax / 150)), fixo: 0, fracionamentos: [] },
-                { nome: "Steward", entrada: "00:00", exigido: 1, fixo: 0, fracionamentos: [] }
-            ];
+            if (setorObjeto.tipo === "restaurante_tom" || setorObjeto.tipo === "restaurante_food_court") {
+                madrugada = [
+                    criarCargo("Líder", "22:00", 1),
+                    criarCargo("Cozinheiro", "22:00", 4),
+                    criarCargo("Steward", "00:00", 11)
+                ];
+            } else {
+                madrugada = [
+                    criarCargo("Cozinheiro", "22:00", 1),
+                    criarCargo("Steward", "00:00", 1)
+                ];
+            }
         }
 
         return { manha, tarde, madrugada };
@@ -716,6 +970,9 @@
 
     function inicializarDadosSemana() {
         const hoje = new Date();
+        const diasNomes = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+        dadosSemana = [];
         for (let i = 0; i < 7; i++) {
             let dataDia = new Date(hoje);
             dataDia.setDate(hoje.getDate() + i);
@@ -747,9 +1004,13 @@
                 estruturaSetores[itemSetor.nome] = setorObj;
             });
 
+            const ano = dataDia.getFullYear();
+            const mes = String(dataDia.getMonth() + 1).padStart(2, '0');
+            const dia = String(dataDia.getDate()).padStart(2, '0');
+
             dadosSemana.push({
-                diaNome: DIAS_SEMANA[i],
-                data: dataDia.toISOString().split('T')[0],
+                diaNome: diasNomes[dataDia.getDay()],
+                data: `${ano}-${mes}-${dia}`,
                 paxGlobal: paxGlobal,
                 setores: estruturaSetores
             });
@@ -801,9 +1062,26 @@
 
     function atualizarDataDiaAtual() {
         const dataVal = document.getElementById('dataEscala').value;
-        if(dataVal) {
-            dadosSemana[diaAtivoIndex].data = dataVal;
+        if (!dataVal) return;
+
+        const partes = dataVal.split('-');
+        const diasNomes = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
+        for (let i = 0; i < dadosSemana.length; i++) {
+            if (i >= diaAtivoIndex) {
+                let dataDia = new Date(partes[0], partes[1] - 1, partes[2]);
+                dataDia.setDate(dataDia.getDate() + (i - diaAtivoIndex));
+
+                const ano = dataDia.getFullYear();
+                const mes = String(dataDia.getMonth() + 1).padStart(2, '0');
+                const dia = String(dataDia.getDate()).padStart(2, '0');
+
+                dadosSemana[i].data = `${ano}-${mes}-${dia}`;
+                dadosSemana[i].diaNome = diasNomes[dataDia.getDay()];
+            }
         }
+
+        renderizarAbas();
     }
 
     function atualizarPaxGlobal(replicarTardeParaMadrugada = false) {
@@ -833,6 +1111,10 @@
         renderizarAbas();
         renderizarSetoresDiaAtivo();
         verificarEValidadorGeral();
+
+        if (document.getElementById('secaoPedidoValorizado').style.display === 'block') {
+            abrirPedidoValorizado();
+        }
     }
 
     function recalcularCargosDosSetores() {
@@ -881,6 +1163,10 @@
 
         renderizarSetoresDiaAtivo();
         verificarEValidadorGeral();
+
+        if (document.getElementById('secaoPedidoValorizado').style.display === 'block') {
+            abrirPedidoValorizado();
+        }
     }
 
     function toggleTurnoSetor(nomeSetor, turnoKey, checkbox) {
@@ -898,6 +1184,10 @@
         setor.definido = true;
         renderizarSetoresDiaAtivo();
         verificarEValidadorGeral();
+
+        if (document.getElementById('secaoPedidoValorizado').style.display === 'block') {
+            abrirPedidoValorizado();
+        }
     }
 
     function togglePaxReserva(nomeSetor, checkbox) {
@@ -908,6 +1198,10 @@
         recalcularCargosDosSetores();
         renderizarSetoresDiaAtivo();
         verificarEValidadorGeral();
+
+        if (document.getElementById('secaoPedidoValorizado').style.display === 'block') {
+            abrirPedidoValorizado();
+        }
     }
 
     function atualizarPaxReservaInput(nomeSetor, turnoKey, valor) {
@@ -918,6 +1212,10 @@
         recalcularCargosDosSetores();
         renderizarSetoresDiaAtivo();
         verificarEValidadorGeral();
+
+        if (document.getElementById('secaoPedidoValorizado').style.display === 'block') {
+            abrirPedidoValorizado();
+        }
     }
 
     function renderizarSetoresDiaAtivo() {
@@ -969,9 +1267,9 @@
                         </div>
                         ${setor.paxReserva.ativo ? `
                             <div class="grid-inputs-reserva">
-                                ${setor.turnosAtivos.manha ? `<div class="campo"><label>PAX Manhã (Café)</label><input type="number" value="${setor.paxReserva.manha}" min="0" oninput="atualizarPaxReservaInput('${nomeSetor}', 'manha', this.value)"></div>` : ''}
-                                ${setor.turnosAtivos.tarde ? `<div class="campo"><label>PAX Tarde (Almoço)</label><input type="number" value="${setor.paxReserva.tarde}" min="0" oninput="atualizarPaxReservaInput('${nomeSetor}', 'tarde', this.value)"></div>` : ''}
-                                ${setor.turnosAtivos.madrugada ? `<div class="campo"><label>PAX Madrugada / Noite</label><input type="number" value="${setor.paxReserva.madrugada}" min="0" oninput="atualizarPaxReservaInput('${nomeSetor}', 'madrugada', this.value)"></div>` : ''}
+                                ${setor.turnosAtivos.manha ? `<div class="campo"><label>PAX Manhã (Café)</label><input type="number" value="${setor.paxReserva.manha}" min="0" onchange="atualizarPaxReservaInput('${nomeSetor}', 'manha', this.value)"></div>` : ''}
+                                ${setor.turnosAtivos.tarde ? `<div class="campo"><label>PAX Tarde (Almoço)</label><input type="number" value="${setor.paxReserva.tarde}" min="0" onchange="atualizarPaxReservaInput('${nomeSetor}', 'tarde', this.value)"></div>` : ''}
+                                ${setor.turnosAtivos.madrugada ? `<div class="campo"><label>PAX Madrugada / Noite</label><input type="number" value="${setor.paxReserva.madrugada}" min="0" onchange="atualizarPaxReservaInput('${nomeSetor}', 'madrugada', this.value)"></div>` : ''}
                             </div>
                         ` : ''}
                     </div>
@@ -1029,11 +1327,11 @@
                     </div>
                     <div class="campo">
                         <label>Exigido</label>
-                        <input type="number" value="${exigido}" min="0" oninput="atualizarCargoProp('${nomeSetor}', '${turnoKey}', ${index}, 'exigido', this.value)">
+                        <div class="badge-qtd-exigido">${exigido}</div>
                     </div>
                     <div class="campo">
                         <label>Quadro Fixo</label>
-                        <input type="number" value="${disponivelFixo}" min="0" oninput="atualizarCargoProp('${nomeSetor}', '${turnoKey}', ${index}, 'fixo', this.value)">
+                        <input type="number" value="${disponivelFixo}" min="0" onchange="atualizarCargoProp('${nomeSetor}', '${turnoKey}', ${index}, 'fixo', this.value)">
                     </div>
                     <div class="campo">
                         <label>Extras</label>
@@ -1057,7 +1355,7 @@
                             </div>
                             <div class="campo">
                                 <label>Qtd Extras</label>
-                                <input type="number" value="${frac.qtd}" min="1" oninput="atualizarFracaoProp('${nomeSetor}', '${turnoKey}', ${index}, ${fIdx}, 'qtd', this.value)">
+                                <input type="number" value="${frac.qtd}" min="1" onchange="atualizarFracaoProp('${nomeSetor}', '${turnoKey}', ${index}, ${fIdx}, 'qtd', this.value)">
                             </div>
                             <div colspan="2"></div>
                             <button class="btn-acao-linha btn-del-linha" title="Remover Fracionamento" onclick="removerFracionamento('${nomeSetor}', '${turnoKey}', ${index}, ${fIdx})">✕</button>
@@ -1077,6 +1375,10 @@
         diaAtivo.setores[nomeSetor].definido = true;
         renderizarSetoresDiaAtivo();
         verificarEValidadorGeral();
+
+        if (document.getElementById('secaoPedidoValorizado').style.display === 'block') {
+            abrirPedidoValorizado();
+        }
     }
 
     function adicionarNovoCargo(nomeSetor, turnoKey) {
@@ -1092,6 +1394,10 @@
         diaAtivo.setores[nomeSetor].definido = true;
         renderizarSetoresDiaAtivo();
         verificarEValidadorGeral();
+
+        if (document.getElementById('secaoPedidoValorizado').style.display === 'block') {
+            abrirPedidoValorizado();
+        }
     }
 
     function removerCargo(nomeSetor, turnoKey, index) {
@@ -1100,6 +1406,10 @@
         diaAtivo.setores[nomeSetor].definido = true;
         renderizarSetoresDiaAtivo();
         verificarEValidadorGeral();
+
+        if (document.getElementById('secaoPedidoValorizado').style.display === 'block') {
+            abrirPedidoValorizado();
+        }
     }
 
     function adicionarFracionamento(nomeSetor, turnoKey, cargoIndex) {
@@ -1113,6 +1423,10 @@
         diaAtivo.setores[nomeSetor].definido = true;
         renderizarSetoresDiaAtivo();
         verificarEValidadorGeral();
+
+        if (document.getElementById('secaoPedidoValorizado').style.display === 'block') {
+            abrirPedidoValorizado();
+        }
     }
 
     function atualizarFracaoProp(nomeSetor, turnoKey, cargoIndex, fIdx, prop, valor) {
@@ -1122,6 +1436,10 @@
         diaAtivo.setores[nomeSetor].definido = true;
         renderizarSetoresDiaAtivo();
         verificarEValidadorGeral();
+
+        if (document.getElementById('secaoPedidoValorizado').style.display === 'block') {
+            abrirPedidoValorizado();
+        }
     }
 
     function removerFracionamento(nomeSetor, turnoKey, cargoIndex, fIdx) {
@@ -1130,6 +1448,10 @@
         diaAtivo.setores[nomeSetor].definido = true;
         renderizarSetoresDiaAtivo();
         verificarEValidadorGeral();
+
+        if (document.getElementById('secaoPedidoValorizado').style.display === 'block') {
+            abrirPedidoValorizado();
+        }
     }
 
     function verificarEValidadorGeral() {
@@ -1164,8 +1486,8 @@
 
     function abrirPedidoValorizado() {
         const diaAtivo = dadosSemana[diaAtivoIndex];
-        const resumo = {};
-        const detalhamento = [];
+        const resumoMap = {};
+        const detalhamentoList = [];
 
         let totalQtdExtras = 0;
         let totalCustoGeral = 0;
@@ -1185,7 +1507,7 @@
                                 const sub = extraBase * valorDiaria;
                                 totalCustoGeral += sub;
 
-                                detalhamento.push({
+                                detalhamentoList.push({
                                     setor: nomeSetor,
                                     turno: NOME_TURNO_LABEL[turnoKey],
                                     cargo: cargo.nome,
@@ -1196,19 +1518,19 @@
                                 });
 
                                 const keyRes = `${cargo.nome}_${turnoKey}`;
-                                if (!resumo[keyRes]) {
-                                    resumo[keyRes] = {
+                                if (!resumoMap[keyRes]) {
+                                    resumoMap[keyRes] = {
                                         cargo: cargo.nome,
                                         turno: NOME_TURNO_LABEL[turnoKey],
-                                        entradas: new Set([cargo.entrada]),
+                                        horariosContagem: {},
                                         qtd: 0,
                                         valorDiaria,
                                         subtotal: 0
                                     };
                                 }
-                                resumo[keyRes].qtd += extraBase;
-                                resumo[keyRes].entradas.add(cargo.entrada);
-                                resumo[keyRes].subtotal += sub;
+                                resumoMap[keyRes].qtd += extraBase;
+                                resumoMap[keyRes].horariosContagem[cargo.entrada] = (resumoMap[keyRes].horariosContagem[cargo.entrada] || 0) + extraBase;
+                                resumoMap[keyRes].subtotal += sub;
                             }
 
                             if (cargo.fracionamentos) {
@@ -1218,7 +1540,7 @@
                                         const subFrac = frac.qtd * valorDiaria;
                                         totalCustoGeral += subFrac;
 
-                                        detalhamento.push({
+                                        detalhamentoList.push({
                                             setor: nomeSetor,
                                             turno: NOME_TURNO_LABEL[turnoKey],
                                             cargo: cargo.nome,
@@ -1229,19 +1551,19 @@
                                         });
 
                                         const keyRes = `${cargo.nome}_${turnoKey}`;
-                                        if (!resumo[keyRes]) {
-                                            resumo[keyRes] = {
+                                        if (!resumoMap[keyRes]) {
+                                            resumoMap[keyRes] = {
                                                 cargo: cargo.nome,
                                                 turno: NOME_TURNO_LABEL[turnoKey],
-                                                entradas: new Set([frac.entrada]),
+                                                horariosContagem: {},
                                                 qtd: 0,
                                                 valorDiaria,
                                                 subtotal: 0
                                             };
                                         }
-                                        resumo[keyRes].qtd += frac.qtd;
-                                        resumo[keyRes].entradas.add(frac.entrada);
-                                        resumo[keyRes].subtotal += subFrac;
+                                        resumoMap[keyRes].qtd += frac.qtd;
+                                        resumoMap[keyRes].horariosContagem[frac.entrada] = (resumoMap[keyRes].horariosContagem[frac.entrada] || 0) + frac.qtd;
+                                        resumoMap[keyRes].subtotal += subFrac;
                                     }
                                 });
                             }
@@ -1251,14 +1573,43 @@
             }
         });
 
+        const listaResumoFinal = Object.values(resumoMap).map(item => {
+            const horariosFormatados = Object.entries(item.horariosContagem)
+                .sort(([h1], [h2]) => h1.localeCompare(h2))
+                .map(([horario, q]) => `${horario} (${q}x)`)
+                .join(', ');
+            return {
+                cargo: item.cargo,
+                turno: item.turno,
+                horariosTexto: horariosFormatados,
+                qtd: item.qtd,
+                valorDiaria: item.valorDiaria,
+                subtotal: item.subtotal
+            };
+        });
+
+        relatorioAtualDados = {
+            resumo: listaResumoFinal,
+            detalhamento: detalhamentoList,
+            totalQtdExtras,
+            totalCustoGeral
+        };
+
+        renderizarTabelasRelatorio(relatorioAtualDados);
+
+        document.getElementById('secaoPedidoValorizado').style.display = 'block';
+        // document.getElementById('secaoPedidoValorizado').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function renderizarTabelasRelatorio(dados) {
         const tbodyRes = document.getElementById('corpoTabelaValores');
         tbodyRes.innerHTML = "";
-        Object.values(resumo).forEach(item => {
+        dados.resumo.forEach(item => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td><strong>${item.cargo}</strong></td>
                 <td>${item.turno}</td>
-                <td>${Array.from(item.entradas).join(', ')}</td>
+                <td>${item.horariosTexto}</td>
                 <td><strong>${item.qtd}</strong></td>
                 <td>R$ ${item.valorDiaria.toFixed(2)}</td>
                 <td><strong>R$ ${item.subtotal.toFixed(2)}</strong></td>
@@ -1268,7 +1619,7 @@
 
         const tbodyDet = document.getElementById('corpoTabelaDetalhamento');
         tbodyDet.innerHTML = "";
-        detalhamento.forEach(item => {
+        dados.detalhamento.forEach(item => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${item.setor}</td>
@@ -1282,30 +1633,41 @@
             tbodyDet.appendChild(tr);
         });
 
-        document.getElementById('lblTotalExtrasQtde').innerText = totalQtdExtras;
-        document.getElementById('lblTotalCustoReais').innerText = totalCustoGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-        document.getElementById('secaoPedidoValorizado').style.display = 'block';
-        document.getElementById('secaoPedidoValorizado').scrollIntoView({ behavior: 'smooth' });
+        document.getElementById('lblTotalExtrasQtde').innerText = dados.totalQtdExtras;
+        document.getElementById('lblTotalCustoReais').innerText = dados.totalCustoGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     function gravarPedidoAtual() {
-        const diaAtivo = dadosSemana[diaAtivoIndex];
-        const pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
-        
-        const novopedido = {
-            id: Date.now(),
-            data: diaAtivo.data,
-            diaNome: diaAtivo.diaNome,
-            qtdExtras: document.getElementById('lblTotalExtrasQtde').innerText,
-            custoTotal: document.getElementById('lblTotalCustoReais').innerText,
-            detalhesHtml: document.getElementById('corpoTabelaValores').innerHTML
-        };
-
-        pedidos.push(novopedido);
-        localStorage.setItem('pedidos_bourbon', JSON.stringify(pedidos));
-        alert('Pedido gravado com sucesso no Histórico!');
+    if (!relatorioAtualDados.resumo || relatorioAtualDados.resumo.length === 0) {
+        alert('Gere primeiro o pedido antes de gravar!');
+        return;
     }
+
+    const diaAtivo = dadosSemana[diaAtivoIndex];
+    
+    const novoPedido = {
+        id: Date.now(),
+        data: diaAtivo.data,
+        diaNome: diaAtivo.diaNome,
+        qtdExtras: relatorioAtualDados.totalQtdExtras,
+        custoTotal: relatorioAtualDados.totalCustoGeral,
+        resumo: relatorioAtualDados.resumo,
+        detalhamento: relatorioAtualDados.detalhamento
+    };
+
+    // Salva localmente no navegador
+    const pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
+    pedidos.push(novoPedido);
+    localStorage.setItem('pedidos_bourbon', JSON.stringify(pedidos));
+
+    // Salva na nuvem (Firebase)
+    if (typeof window.salvarNoFirebase === 'function') {
+        window.salvarNoFirebase(novoPedido);
+    }
+
+    alert('Pedido gravado com sucesso no Histórico e na Nuvem!');
+}
+    
 
     function abrirModalHistorico() {
         const modal = document.getElementById('modalHistorico');
@@ -1329,13 +1691,17 @@
                     <tbody>
             `;
             pedidos.forEach((p, index) => {
+                const valorFormatado = typeof p.custoTotal === 'number' 
+                    ? p.custoTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2}) 
+                    : p.custoTotal;
                 html += `
                     <tr>
                         <td><strong>${p.data}</strong></td>
                         <td>${p.diaNome}</td>
                         <td>${p.qtdExtras} pax</td>
-                        <td>R$ ${p.custoTotal}</td>
+                        <td>R$ ${valorFormatado}</td>
                         <td>
+                            <button class="btn-tbl-acao btn-tbl-ver" onclick="visualizarPedidoSalvo(${p.id})">👁️ Ver</button>
                             <button class="btn-tbl-acao btn-tbl-excel" onclick="exportarExcelPedidoSalvo(${p.id})">📊 Excel</button>
                             <button class="btn-tbl-acao btn-tbl-del" onclick="excluirPedidoSalvo(${index})">🗑️ Excluir</button>
                         </td>
@@ -1353,51 +1719,127 @@
         document.getElementById('modalHistorico').style.display = 'none';
     }
 
+    function visualizarPedidoSalvo(id) {
+        const pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
+        const ped = pedidos.find(p => p.id === id);
+        if (!ped) return;
+
+        if (ped.resumo && ped.detalhamento) {
+            relatorioAtualDados = {
+                resumo: ped.resumo,
+                detalhamento: ped.detalhamento,
+                totalQtdExtras: ped.qtdExtras,
+                totalCustoGeral: typeof ped.custoTotal === 'number' ? ped.custoTotal : parseFloat(ped.custoTotal.replace('.', '').replace(',', '.')) || 0
+            };
+            renderizarTabelasRelatorio(relatorioAtualDados);
+        }
+
+        fecharModalHistorico();
+        document.getElementById('secaoPedidoValorizado').style.display = 'block';
+        document.getElementById('secaoPedidoValorizado').scrollIntoView({ behavior: 'smooth' });
+    }
+
     function excluirPedidoSalvo(index) {
-        let pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
-        pedidos.splice(index, 1);
-        localStorage.setItem('pedidos_bourbon', JSON.stringify(pedidos));
-        abrirModalHistorico();
+        if (confirm("Tem certeza que deseja excluir este registro do histórico?")) {
+            let pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
+            pedidos.splice(index, 1);
+            localStorage.setItem('pedidos_bourbon', JSON.stringify(pedidos));
+            abrirModalHistorico();
+        }
     }
 
     function exportarExcelPedidoAtual() {
         const dataStr = dadosSemana[diaAtivoIndex].data;
-        let csvContent = "data:text/csv;charset=utf-8,Cargo;Turno;Entrada;Qtd Extras;Diaria;Subtotal\n";
+        let csvContent = "data:text/csv;charset=utf-8,Cargo / Funcao;Turno;Horario(s) Entrada (Qtd);Qtd Extras;Valor Diaria (RS);Subtotal (RS)\n";
         
-        const rows = document.querySelectorAll("#corpoTabelaValores tr");
-        rows.forEach(row => {
-            const cols = row.querySelectorAll("td");
-            if(cols.length) {
-                const rowData = Array.from(cols).map(c => `"${c.innerText.replace(/"/g, '""')}"`).join(";");
-                csvContent += rowData + "\n";
-            }
+        relatorioAtualDados.resumo.forEach(item => {
+            csvContent += `"${item.cargo}";"${item.turno}";"${item.horariosTexto}";"${item.qtd}";"R$ ${item.valorDiaria.toFixed(2)}";"R$ ${item.subtotal.toFixed(2)}"\n`;
+        });
+
+        csvContent += `\n\nDETALHAMENTO POR LOCAL\nLocal;Turno;Cargo / Funcao;Qtd Extras;Entrada;Valor Diaria (RS);Subtotal (RS)\n`;
+        relatorioAtualDados.detalhamento.forEach(item => {
+            csvContent += `"${item.setor}";"${item.turno}";"${item.cargo}";"${item.qtd}";"${item.entrada}";"R$ ${item.valorDiaria.toFixed(2)}";"R$ ${item.subtotal.toFixed(2)}"\n`;
         });
 
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `Pedido_A&B_${dataStr}.csv`);
+        link.setAttribute("download", `Pedido_A&B_Completo_${dataStr}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     }
 
     function exportarExcelPedidoSalvo(id) {
-        const pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
-        const ped = pedidos.find(p => p.id === id);
-        if(!ped) return;
-
-        let csvContent = "data:text/csv;charset=utf-8,Pedido_ID;Data;Dia;Qtd_Extras;Custo_Total\n";
-        csvContent += `"${ped.id}";"${ped.data}";"${ped.diaNome}";"${ped.qtdExtras}";"R$ ${ped.custoTotal}"\n`;
-
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `Historico_Pedido_${ped.data}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    const pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
+    const ped = pedidos.find(p => p.id === id);
+    if (!ped) {
+        alert('Pedido não encontrado!');
+        return;
     }
+
+    let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+    csvContent += `RELATORIO DE PEDIDO - ${ped.diaNome.toUpperCase()} (${ped.data})\n`;
+    csvContent += `Custo Total: R$ ${ped.custoTotal.toFixed(2).replace('.', ',')}\n\n`;
+    csvContent += "Item;Qtd Folha;Extras;Status;Custo Total\n";
+
+    ped.resumo.forEach(item => {
+        csvContent += `"${item.nome}";${item.qtdFolha};${item.qtdExtras};"${item.status}";"R$ ${item.custoTotal.toFixed(2).replace('.', ',')}"\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Pedido_${ped.diaNome}_${ped.data}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
 </script>
+<!-- BANCO DE DADOS FIREBASE -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <script>
+    // Configuração do Firebase
+    var firebaseConfig = {
+      apiKey: "AIzaSyAQyjjVt13sfYHdjXZr2fZM_4QEBVEwHUQ",
+      authDomain: "projeto-mo-5d64d.firebaseapp.com",
+      databaseURL: "https://projeto-mo-5d64d-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "projeto-mo-5d64d",
+      storageBucket: "projeto-mo-5d64d.firebasestorage.app",
+      messagingSenderId: "1048967299029",
+      appId: "1:1048967299029:web:e9042c020cd2b7ff0d875c"
+    };
+
+    // Inicializa o Firebase
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    var database = firebase.database();
+
+    window.salvarNoFirebase = function(dados) {
+    database.ref('historico_pedidos').push({
+        ...dados,
+        dataRegistro: new Date().toLocaleString("pt-BR")
+    }).then(function() {
+        console.log("Dados gravados com sucesso na nuvem!");
+    }).catch(function(err) {
+        console.error("Erro ao salvar no banco:", err);
+    });
+};
+
+// LER DADOS DA NUVEM EM TEMPO REAL E ATUALIZAR O HISTÓRICO LOCAL
+database.ref('historico_pedidos').on('value', function(snapshot) {
+    var dadosDoFirebase = snapshot.val();
+    if (dadosDoFirebase) {
+        var listaPedidos = Object.values(dadosDoFirebase);
+        // Atualiza a chave correta do sistema
+        localStorage.setItem('pedidos_bourbon', JSON.stringify(listaPedidos));
+        console.log("Histórico sincronizado com sucesso da nuvem!");
+    }
+});
+</script>
+ 
 </body>
 </html>
