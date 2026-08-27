@@ -6,15 +6,16 @@
     <title>Painel Master A&B - Bourbon</title>
     <style>
         :root {
-            --primary: #005a36;        
-            --primary-light: #e6f0ec; 
-            --accent: #0d9488;        
+            --primary: #00463f;        
+            --primary-dark: #00332e;
+            --primary-light: #e6eceb; 
+            --accent: #c5a059;        
             --success: #10b981;        
             --text-main: #1f2937;     
             --text-muted: #64748b;    
             --bg-body: #f1f5f9;       
             --border: #cbd5e1;        
-            --danger: #ef4444;
+            --danger: #ef4444;        
         }
 
         *, *::before, *::after { box-sizing: border-box; }
@@ -40,17 +41,36 @@
             border: 1px solid var(--border);
         }
 
-        .header {
-            border-bottom: 2px solid var(--primary-light);
-            padding-bottom: 15px;
-            margin-bottom: 20px;
+                .header {
+            background-color: var(--primary);
+            border-bottom: 3px solid var(--accent);
+            padding: 16px 24px;
+            margin-bottom: 25px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 70, 63, 0.15);
         }
 
-        .header h2 { color: var(--primary); margin: 0 0 5px 0; font-size: 22px; font-weight: 700; }
-        .header p { color: var(--text-muted); margin: 0; font-size: 13px; }
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .header-logo {
+            max-height: 50px;
+            width: auto;
+            object-fit: contain;
+            background: #ffffff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .header h2 { color: #ffffff; margin: 0 0 4px 0; font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .header p { color: #d1dcdb; margin: 0; font-size: 13px; }
 
         .btn-historico-topo {
             background-color: #334155;
@@ -473,16 +493,16 @@
 
 <div class="container">
     <div class="header">
-        <div>
-            <h2>🏢 Dimensionamento Semanal A&B</h2>
-            <p>Validação do Quadro Geral e Geração do Pedido Valorizado</p>
+        <div class="header-brand">
+            <img src="logo1.png" alt="Bourbon Logo" class="header-logo" style="clip-path: inset(12% 12% 12% 12%); border-radius: 4px; max-height: 50px; object-fit: contain;" onerror="this.style.display='none'">
+            <div>
+                <h2>Dimensionamento Semanal A&B</h2>
+                <p>Validação do Quadro Geral e Geração do Pedido Valorizado</p>
+            </div>
         </div>
         <div style="display: flex; align-items: center; gap: 10px;">
-            <button class="btn-historico-topo" onclick="abrirModalRegras()">⚙️ Configurar Regras</button>
-            <button class="btn-historico-topo" onclick="abrirModalHistorico()">📜 Histórico de Pedidos</button>
-            <div style="font-family: 'Georgia', serif; font-size: 18px; font-weight: bold; color: #005a36; border-left: 3px solid #005a36; padding-left: 12px;">
-                BOURBON
-            </div>
+            <button class="btn-historico-topo" style="background-color: #c5a059; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;" onclick="abrirModalRegras()">⚙️ Configurar Regras</button>
+            <button class="btn-historico-topo" style="background-color: #c5a059; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;" onclick="abrirModalHistorico()">📜 Histórico de Pedidos</button>
         </div>
     </div>
 
@@ -494,7 +514,6 @@
                 <label for="dataEscala">Data da Operação:</label>
                 <input type="date" id="dataEscala" onchange="atualizarDataDiaAtual()">
             </div>
-
             <!-- PAX MANHÃ -->
             <div class="bloco-pax-turno">
                 <div class="titulo-pax-turno">☕ Manhã (Café)</div>
@@ -1729,5 +1748,10 @@
         }
     });
 </script>
+
+<footer style="text-align: center; padding: 15px; margin-top: 30px; font-family: sans-serif; font-size: 12px; color: #777;">
+    Desenvolvido por <span style="color: #c5a059; font-weight: bold;">Lincoln Sanches</span> &bull; Todos os direitos reservados
+</footer>
+
 </body>
 </html>
