@@ -662,35 +662,66 @@
     </div>
 </div>
 
-<!-- MODAL CONFIGURADOR DE REGRAS -->
+<!-- MODAL CONFIGURADOR DE REGRAS E VALORES -->
 <div class="modal-overlay" id="modalRegras">
     <div class="modal-conteudo">
         <div class="modal-header">
-            <h3 style="margin: 0; color: var(--primary);">📐 Regras de Dimensionamento por Local</h3>
+            <h3 style="margin: 0; color: var(--primary);">⚙️ Configurações Gerais</h3>
             <button onclick="fecharModalRegras()" style="background:none; border:none; font-size:18px; cursor:pointer; font-weight:bold;">✕</button>
         </div>
+
+        <!-- Sub-abas do Modal -->
+        <div class="sub-tabs-relatorio" style="margin-bottom: 20px;">
+            <button class="btn-subtab ativa" id="subTabRegras" onclick="alternarAbaConfig('regras')">📐 Regras por PAX</button>
+            <button class="btn-subtab" id="subTabValores" onclick="alternarAbaConfig('valores')">💰 Valores das Diárias</button>
+        </div>
         
-        <div style="display: flex; gap: 15px; margin-bottom: 20px;">
-            <div class="campo">
-                <label>SELECIONE O LOCAL:</label>
-                <select id="cfgSelectLocal" onchange="carregarRegrasNaInterface()"></select>
+        <!-- GUIA 1: DIMENSIONAMENTO -->
+        <div id="conteudoConfigRegras">
+            <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                <div class="campo">
+                    <label>SELECIONE O LOCAL:</label>
+                    <select id="cfgSelectLocal" onchange="carregarRegrasNaInterface()"></select>
+                </div>
+                <div class="campo">
+                    <label>SELECIONE O TURNO:</label>
+                    <select id="cfgSelectTurno" onchange="carregarRegrasNaInterface()">
+                        <option value="cafe_manha">Café Manhã</option>
+                        <option value="almoco">Almoço</option>
+                        <option value="jantar">Jantar</option>
+                        <option value="cafe_madrugada">Café Madrugada</option>
+                    </select>
+                </div>
             </div>
-            <div class="campo">
-                <label>SELECIONE O TURNO:</label>
-                <select id="cfgSelectTurno" onchange="carregarRegrasNaInterface()">
-                    <option value="cafe_manha">Café Manhã</option>
-                    <option value="almoco">Almoço</option>
-                    <option value="jantar">Jantar</option>
-                    <option value="cafe_madrugada">Café Madrugada</option>
-                </select>
+
+            <div id="containerFaixasConfig"></div>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+                <button class="btn-add-funcao" onclick="adicionarNovaFaixaConfig()">➕ Adicionar Nova Faixa de PAX</button>
+                <button class="btn-acao btn-gravar" onclick="salvarRegrasNoFirebase()">💾 Salvar Parametrização</button>
             </div>
         </div>
 
-        <div id="containerFaixasConfig"></div>
+        <!-- GUIA 2: CADASTRO DE VALORES -->
+        <div id="conteudoConfigValores" style="display: none;">
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">
+                Cadastre os cargos disponíveis e defina o valor padrão da diária por função.
+            </p>
+            <table class="tabela-custom">
+                <thead>
+                    <tr>
+                        <th>Nome da Função / Cargo</th>
+                        <th>Valor Diária (R$)</th>
+                        <th style="width: 80px; text-align: center;">Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="corpoTabelaConfigValores"></tbody>
+            </table>
 
-        <div style="display: flex; justify-content: space-between; margin-top: 15px;">
-            <button class="btn-add-funcao" onclick="adicionarNovaFaixaConfig()">➕ Adicionar Nova Faixa de PAX</button>
-            <button class="btn-acao btn-gravar" onclick="salvarRegrasNoFirebase()">💾 Salvar Parametrização</button>
+            <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+                <button class="btn-add-funcao" onclick="adicionarLinhaNovoValor()">➕ Adicionar Função</button>
+                <button class="btn-acao btn-gravar" onclick="salvarValoresNoFirebase()">💾 Salvar Tabela de Preços</button>
+            </div>
         </div>
     </div>
 </div>
@@ -715,29 +746,115 @@
     }
     var database = firebase.database();
 
-    const VALORES_PADRAO_DIARIA = {
-        "Banquetes Cozinha": 180.00,
-        "Banquetes Ajudante": 140.00,
-        "Cozinha Quente": 180.00,
-        "Cozinha Ajudante": 140.00,
-        "Garde Manger": 160.00,
-        "Garde Manger Ajudante": 140.00,
-        "Confeiteiro": 180.00,
-        "Confeiteiro Ajudante": 140.00,
-        "Cozinha Café": 160.00,
-        "Ajudante Café": 140.00,
-        "Refeitorio Cozinha": 160.00,
-        "Refeitorio Ajudante": 140.00,
-        "Steward": 140.00,
-        "Pizzaiolo": 170.00,
-        "Churrasqueiro": 180.00,
-        "Padeiro": 170.00,
-        "Líder": 200.00,
-        "Sushiman": 190.00,
-        "Açougueiro": 180.00,
-        "Carregador": 140.00,
-        "Legumeria": 140.00
-    };
+    // Substituir a constante estática por uma variável mutável
+let VALORES_PADRAO_DIARIA = {
+    "Banquetes Cozinha": 180.00,
+    "Banquetes Ajudante": 140.00,
+    "Cozinha Quente": 180.00,
+    "Cozinha Ajudante": 140.00,
+    "Garde Manger": 160.00,
+    "Garde Manger Ajudante": 140.00,
+    "Confeiteiro": 180.00,
+    "Confeiteiro Ajudante": 140.00,
+    "Cozinha Café": 160.00,
+    "Ajudante Café": 140.00,
+    "Refeitorio Cozinha": 160.00,
+    "Refeitorio Ajudante": 140.00,
+    "Steward": 140.00,
+    "Pizzaiolo": 170.00,
+    "Churrasqueiro": 180.00,
+    "Padeiro": 170.00,
+    "Líder": 200.00,
+    "Sushiman": 190.00,
+    "Açougueiro": 180.00,
+    "Carregador": 140.00,
+    "Legumeria": 140.00
+};
+
+// No window.onload, escutar as alterações de valores vindos do Firebase
+database.ref('valores_funcoes').on('value', function(snapshot) {
+    if (snapshot.exists()) {
+        VALORES_PADRAO_DIARIA = snapshot.val();
+        renderizarSetoresDiaAtivo(); // Atualiza dropdowns de opções com as novas funções
+    }
+});
+
+// Função para alternar entre as abas do Modal
+function alternarAbaConfig(aba) {
+    document.getElementById('subTabRegras').className = `btn-subtab ${aba === 'regras' ? 'ativa' : ''}`;
+    document.getElementById('subTabValores').className = `btn-subtab ${aba === 'valores' ? 'ativa' : ''}`;
+    
+    document.getElementById('conteudoConfigRegras').style.display = aba === 'regras' ? 'block' : 'none';
+    document.getElementById('conteudoConfigValores').style.display = aba === 'valores' ? 'block' : 'none';
+
+    if (aba === 'valores') {
+        renderizarTabelaEdicaoValores();
+    }
+}
+
+// Renderiza a lista de funções na guia de valores
+function renderizarTabelaEdicaoValores() {
+    const tbody = document.getElementById('corpoTabelaConfigValores');
+    tbody.innerHTML = "";
+
+    Object.keys(VALORES_PADRAO_DIARIA).forEach(funcao => {
+        const val = VALORES_PADRAO_DIARIA[funcao];
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>
+                <input type="text" value="${funcao}" class="inp-nome-funcao">
+            </td>
+            <td>
+                <input type="number" step="0.01" value="${val}" class="inp-valor-funcao">
+            </td>
+            <td style="text-align: center;">
+                <button class="btn-acao-linha btn-del-linha" onclick="this.closest('tr').remove()">🗑️</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+// Adiciona uma linha em branco para cadastrar novo cargo
+function adicionarLinhaNovoValor() {
+    const tbody = document.getElementById('corpoTabelaConfigValores');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td>
+            <input type="text" placeholder="Nome da nova função" class="inp-nome-funcao">
+        </td>
+        <td>
+            <input type="number" step="0.01" value="150.00" class="inp-valor-funcao">
+        </td>
+        <td style="text-align: center;">
+            <button class="btn-acao-linha btn-del-linha" onclick="this.closest('tr').remove()">🗑️</button>
+        </td>
+    `;
+    tbody.appendChild(tr);
+}
+
+// Salva a nova tabela de preços e cargos no Firebase
+function salvarValoresNoFirebase() {
+    const linhas = document.querySelectorAll('#corpoTabelaConfigValores tr');
+    let novosValores = {};
+
+    linhas.forEach(row => {
+        const nome = row.querySelector('.inp-nome-funcao').value.trim();
+        const valor = parseFloat(row.querySelector('.inp-valor-funcao').value) || 0;
+
+        if (nome !== "") {
+            novosValores[nome] = valor;
+        }
+    });
+
+    database.ref('valores_funcoes').set(novosValores)
+        .then(() => {
+            alert("Tabela de valores por função atualizada com sucesso!");
+            VALORES_PADRAO_DIARIA = novosValores;
+            renderizarSetoresDiaAtivo();
+        })
+        .catch(err => alert("Erro ao salvar valores: " + err.message));
+}
 
     const HORARIOS_POR_TURNO = {
         cafe_manha: ["05:00", "06:00", "07:00", "08:00", "09:00", "10:00", "11:00"],
