@@ -488,6 +488,7 @@
             align-items: center;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 </head>
 <body>
 
@@ -1749,30 +1750,247 @@ function salvarValoresNoFirebase() {
         document.body.removeChild(link);
     }
 
-    function exportarExcelPedidoSalvo(id) {
+    async function exportarExcelPedidoSalvo(id) {
         const pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
         const ped = pedidos.find(p => p.id === id);
+
         if (!ped) {
             alert('Pedido não encontrado!');
             return;
         }
 
-        let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-        csvContent += `RELATORIO DE PEDIDO - ${ped.diaNome.toUpperCase()} (${ped.data})\n`;
-        csvContent += `Custo Total: R$ ${ped.custoTotal.toFixed(2).replace('.', ',')}\n\n`;
-        csvContent += "Item;Qtd Folha;Extras;Status;Custo Total\n";
+        if (typeof ExcelJS === 'undefined') {
+            alert('A biblioteca do Excel não foi carregada. Verifique sua conexão com a internet e tente novamente.');
+            return;
+        }
 
-        ped.resumo.forEach(item => {
-            csvContent += `"${item.nome}";${item.qtdFolha};${item.qtdExtras};"${item.status}";"R$ ${item.custoTotal.toFixed(2).replace('.', ',')}"\n`;
-        });
+        try {
+            const workbook = new ExcelJS.Workbook();
+            workbook.creator = 'Painel Master A&B - Bourbon';
+            workbook.created = new Date();
+            workbook.modified = new Date();
+            workbook.properties.date1904 = false;
 
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `Pedido_${ped.diaNome}_${ped.data}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+            const resumo = Array.isArray(ped.resumo) ? ped.resumo : [];
+            const detalhamento = Array.isArray(ped.detalhamento) ? ped.detalhamento : [];
+            const custoTotal = Number(ped.custoTotal || 0);
+            const qtdExtras = Number(ped.qtdExtras || 0);
+
+            const borda = {
+                top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+            };
+
+            const corPrimaria = 'FF00463F';
+            const corDourada = 'FFC5A059';
+            const corCabecalho = 'FFE6ECEB';
+            const corTotal = 'FFF1F5F9';
+
+            function estilizarCabecalho(row) {
+                row.height = 24;
+                row.eachCell(cell => {
+                    cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: corPrimaria } };
+                    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                    cell.border = borda;
+                });
+            }
+
+            function estilizarTabela(row) {
+                row.eachCell(cell => {
+                    cell.border = borda;
+                    cell.alignment = { vertical: 'middle', wrapText: true };
+                });
+            }
+
+            function estilizarTotal(row) {
+                row.eachCell(cell => {
+                    cell.font = { bold: true, color: { argb: corPrimaria } };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: corTotal } };
+                    cell.border = borda;
+                    cell.alignment = { vertical: 'middle' };
+                });
+            }
+
+            // ============================
+            // ABA 1 - RESUMO
+            // ============================
+            const wsResumo = workbook.addWorksheet('Resumo', {
+                views: [{ state: 'frozen', ySplit: 6 }]
+            });
+
+            wsResumo.columns = [
+                { key: 'cargo', width: 28 },
+                { key: 'turno', width: 16 },
+                { key: 'horarios', width: 32 },
+                { key: 'qtd', width: 14 },
+                { key: 'valorDiaria', width: 18 },
+                { key: 'subtotal', width: 18 }
+            ];
+
+            wsResumo.mergeCells('A1:F1');
+            wsResumo.getCell('A1').value = `RELATÓRIO DE PEDIDO - ${(ped.diaNome || '').toUpperCase()}`;
+            wsResumo.getCell('A1').font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+            wsResumo.getCell('A1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: corPrimaria } };
+            wsResumo.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' };
+            wsResumo.getRow(1).height = 30;
+
+            wsResumo.mergeCells('A2:F2');
+            wsResumo.getCell('A2').value = `Data da operação: ${ped.data || ''}`;
+            wsResumo.getCell('A2').font = { bold: true, color: { argb: corPrimaria } };
+
+            wsResumo.getCell('A4').value = 'Quantidade total de extras';
+            wsResumo.getCell('B4').value = qtdExtras;
+            wsResumo.getCell('D4').value = 'Custo total';
+            wsResumo.getCell('E4').value = custoTotal;
+            wsResumo.getCell('E4').numFmt = 'R$ #,##0.00';
+
+            ['A4', 'B4', 'D4', 'E4'].forEach(ref => {
+                wsResumo.getCell(ref).font = { bold: true };
+                wsResumo.getCell(ref).border = borda;
+                wsResumo.getCell(ref).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: corCabecalho } };
+            });
+
+            const cabResumo = wsResumo.addRow([
+                'Cargo / Função',
+                'Turno',
+                'Horário(s) Entrada (Qtd)',
+                'Qtd Extras',
+                'Valor Diária (R$)',
+                'Subtotal (R$)'
+            ]);
+            estilizarCabecalho(cabResumo);
+
+            const primeiraLinhaResumo = 6;
+            resumo.forEach(item => {
+                const row = wsResumo.addRow([
+                    item.cargo || '',
+                    item.turno || '',
+                    item.horariosTexto || '',
+                    Number(item.qtd || 0),
+                    Number(item.valorDiaria || 0),
+                    Number(item.subtotal || 0)
+                ]);
+                row.getCell(5).numFmt = 'R$ #,##0.00';
+                row.getCell(6).numFmt = 'R$ #,##0.00';
+                estilizarTabela(row);
+            });
+
+            const ultimaLinhaResumo = Math.max(primeiraLinhaResumo, wsResumo.lastRow.number);
+            const totalResumo = wsResumo.addRow([
+                'TOTAL',
+                '',
+                '',
+                { formula: `SUM(D${primeiraLinhaResumo}:D${ultimaLinhaResumo})` },
+                '',
+                { formula: `SUM(F${primeiraLinhaResumo}:F${ultimaLinhaResumo})` }
+            ]);
+            totalResumo.getCell(6).numFmt = 'R$ #,##0.00';
+            estilizarTotal(totalResumo);
+
+            wsResumo.autoFilter = {
+                from: `A6:F${ultimaLinhaResumo}`,
+                to: `A6:F${ultimaLinhaResumo}`
+            };
+
+            // ============================
+            // ABA 2 - DETALHAMENTO
+            // ============================
+            const wsDetalhe = workbook.addWorksheet('Detalhamento', {
+                views: [{ state: 'frozen', ySplit: 5 }]
+            });
+
+            wsDetalhe.columns = [
+                { key: 'setor', width: 28 },
+                { key: 'turno', width: 16 },
+                { key: 'cargo', width: 28 },
+                { key: 'qtd', width: 14 },
+                { key: 'entrada', width: 16 },
+                { key: 'valorDiaria', width: 18 },
+                { key: 'subtotal', width: 18 }
+            ];
+
+            wsDetalhe.mergeCells('A1:G1');
+            wsDetalhe.getCell('A1').value = `DETALHAMENTO - ${(ped.diaNome || '').toUpperCase()} (${ped.data || ''})`;
+            wsDetalhe.getCell('A1').font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+            wsDetalhe.getCell('A1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: corPrimaria } };
+            wsDetalhe.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' };
+            wsDetalhe.getRow(1).height = 30;
+
+            const cabDetalhe = wsDetalhe.addRow([
+                'Local / Setor',
+                'Turno',
+                'Cargo / Função',
+                'Qtd Extras',
+                'Entrada',
+                'Valor Diária (R$)',
+                'Subtotal (R$)'
+            ]);
+            estilizarCabecalho(cabDetalhe);
+
+            const primeiraLinhaDetalhe = 3;
+            detalhamento.forEach(item => {
+                const row = wsDetalhe.addRow([
+                    item.setor || '',
+                    item.turno || '',
+                    item.cargo || '',
+                    Number(item.qtd || 0),
+                    item.entrada || '',
+                    Number(item.valorDiaria || 0),
+                    Number(item.subtotal || 0)
+                ]);
+                row.getCell(6).numFmt = 'R$ #,##0.00';
+                row.getCell(7).numFmt = 'R$ #,##0.00';
+                estilizarTabela(row);
+            });
+
+            const ultimaLinhaDetalhe = Math.max(primeiraLinhaDetalhe, wsDetalhe.lastRow.number);
+            const totalDetalhe = wsDetalhe.addRow([
+                'TOTAL',
+                '',
+                '',
+                { formula: `SUM(D${primeiraLinhaDetalhe}:D${ultimaLinhaDetalhe})` },
+                '',
+                '',
+                { formula: `SUM(G${primeiraLinhaDetalhe}:G${ultimaLinhaDetalhe})` }
+            ]);
+            totalDetalhe.getCell(7).numFmt = 'R$ #,##0.00';
+            estilizarTotal(totalDetalhe);
+
+            wsDetalhe.autoFilter = {
+                from: `A2:G${ultimaLinhaDetalhe}`,
+                to: `A2:G${ultimaLinhaDetalhe}`
+            };
+
+            // Ajustes finais
+            [wsResumo, wsDetalhe].forEach(ws => {
+                ws.eachRow(row => {
+                    row.eachCell(cell => {
+                        cell.alignment = cell.alignment || { vertical: 'middle' };
+                    });
+                });
+            });
+
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            });
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Pedido_${ped.diaNome || 'Pedido'}_${ped.data || 'sem_data'}.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (erro) {
+            console.error('Erro ao gerar Excel:', erro);
+            alert('Não foi possível gerar o arquivo Excel. Veja o console do navegador para mais detalhes.');
+        }
     }
 
     function abrirModalRegras() {
