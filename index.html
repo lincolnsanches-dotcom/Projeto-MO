@@ -60,13 +60,13 @@
         }
 
         .header-logo {
-            max-height: 50px;
-            width: auto;
-            object-fit: contain;
-            background: #ffffff;
-            padding: 6px 12px;
-            border-radius: 6px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    max-height: 30px;
+    width: auto;
+    object-fit: contain;
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
         }
 
         .header h2 { color: #ffffff; margin: 0 0 4px 0; font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
@@ -647,7 +647,7 @@
         <div class="acoes-relatorio">
             <button class="btn-acao btn-gravar" onclick="gravarPedidoAtual()">💾 Gravar Pedido</button>
             <button class="btn-acao btn-excel" onclick="exportarExcelPedidoAtual()">📊 Exportar para Excel</button>
-            <button class="btn-acao" style="background:var(--primary); color:white;" onclick="window.print()">🖨️ Imprimir Pedido</button>
+            <button class="btn-acao" style="background:var(--primary); color:white;" onclick="imprimirPedido()">🖨️ Imprimir Pedido</button>
         </div>
     </div>
 </div>
@@ -902,7 +902,27 @@ function salvarValoresNoFirebase() {
         database.ref('regras_dimensionamento').on('value', function(snapshot) {
             if (snapshot.exists()) {
                 REGRAS_CONFIGURADAS = snapshot.val();
-                recalcularCargosDosSetores();
+
+                // As regras precisam alimentar todos os dias da semana.
+                // Porém, não devemos recalcular por cima de cargos/fracionamentos
+                // que o usuário já tenha configurado manualmente.
+                dadosSemana.forEach(dia => {
+                    Object.keys(dia.setores).forEach(nomeSetor => {
+                        const setor = dia.setores[nomeSetor];
+                        if (!setor.operando) return;
+
+                        const calculados = calcularCargosPorSetor(setor, dia);
+
+                        ['cafe_manha', 'almoco', 'jantar', 'cafe_madrugada'].forEach(turnoKey => {
+                            if (!setor.turnosAtivos[turnoKey]) return;
+
+                            if (!Array.isArray(setor.cargos[turnoKey]) || setor.cargos[turnoKey].length === 0) {
+                                setor.cargos[turnoKey] = calculados[turnoKey] || [];
+                            }
+                        });
+                    });
+                });
+
                 renderizarSetoresDiaAtivo();
             }
         });
@@ -1049,6 +1069,9 @@ function salvarValoresNoFirebase() {
         document.getElementById('paxCafeMadrugadaCr').value = dia.paxGlobal.cafe_madrugada.criancas;
         document.getElementById('lblTotalPaxCafeMadrugada').innerText = `${dia.paxGlobal.cafe_madrugada.adultos + dia.paxGlobal.cafe_madrugada.criancas} PAX`;
 
+        // Ao trocar de dia, apenas carregamos os dados já salvos daquele dia.
+        // O recálculo ocorre quando PAX/regras/status são alterados, evitando
+        // substituir cargos e fracionamentos já configurados pelo usuário.
         renderizarSetoresDiaAtivo();
         verificarEValidadorGeral();
     }
@@ -1471,6 +1494,37 @@ function salvarValoresNoFirebase() {
 
     function abrirPedidoValorizado() {
         const diaAtivo = dadosSemana[diaAtivoIndex];
+
+        // Impede que quadro fixo + fracionamentos ultrapassem o efetivo exigido.
+        // Sem essa validação, o pedido podia contabilizar extras acima do necessário.
+        let erroFracionamento = null;
+        Object.keys(diaAtivo.setores).some(nomeSetor => {
+            const setor = diaAtivo.setores[nomeSetor];
+            if (!setor.operando) return false;
+
+            return ['cafe_manha', 'almoco', 'jantar', 'cafe_madrugada'].some(turnoKey => {
+                const cargos = setor.cargos[turnoKey] || [];
+                return cargos.some(cargo => {
+                    const fixo = Math.max(0, parseInt(cargo.fixo) || 0);
+                    const exigido = Math.max(0, parseInt(cargo.exigido) || 0);
+                    const fracionado = (cargo.fracionamentos || []).reduce(
+                        (acc, f) => acc + Math.max(0, parseInt(f.qtd) || 0), 0
+                    );
+
+                    if (fixo + fracionado > exigido) {
+                        erroFracionamento = `O cargo "${cargo.nome}" do setor "${nomeSetor}" (${NOME_TURNO_LABEL[turnoKey]}) ultrapassa o exigido.\n\nExigido: ${exigido}\nQuadro fixo: ${fixo}\nFracionamentos: ${fracionado}`;
+                        return true;
+                    }
+                    return false;
+                });
+            });
+        });
+
+        if (erroFracionamento) {
+            alert(erroFracionamento);
+            return;
+        }
+
         const resumoMap = {};
         const detalhamentoList = [];
 
@@ -1620,7 +1674,7 @@ function salvarValoresNoFirebase() {
         document.getElementById('lblTotalCustoReais').innerText = dados.totalCustoGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
-    function gravarPedidoAtual() {
+    async function gravarPedidoAtual() {
         if (!relatorioAtualDados.resumo || relatorioAtualDados.resumo.length === 0) {
             alert('Gere primeiro o pedido antes de gravar!');
             return;
@@ -1638,15 +1692,23 @@ function salvarValoresNoFirebase() {
             detalhamento: relatorioAtualDados.detalhamento
         };
 
-        const pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
-        pedidos.push(novoPedido);
-        localStorage.setItem('pedidos_bourbon', JSON.stringify(pedidos));
+        try {
+            if (typeof window.salvarNoFirebase === 'function') {
+                const firebaseId = await window.salvarNoFirebase(novoPedido);
+                if (firebaseId) novoPedido.firebaseId = firebaseId;
+            }
 
-        if (typeof window.salvarNoFirebase === 'function') {
-            window.salvarNoFirebase(novoPedido);
+            const pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
+            pedidos.push(novoPedido);
+            localStorage.setItem('pedidos_bourbon', JSON.stringify(pedidos));
+
+            alert(typeof window.salvarNoFirebase === 'function'
+                ? 'Pedido gravado com sucesso no Histórico e na Nuvem!'
+                : 'Pedido gravado com sucesso no Histórico!');
+        } catch (err) {
+            console.error('Erro ao gravar pedido:', err);
+            alert('Não foi possível gravar o pedido na Nuvem. O registro não foi incluído no Histórico local.\n\nErro: ' + (err.message || err));
         }
-
-        alert('Pedido gravado com sucesso no Histórico e na Nuvem!');
     }
 
     function abrirModalHistorico() {
@@ -1719,35 +1781,299 @@ function salvarValoresNoFirebase() {
         document.getElementById('secaoPedidoValorizado').scrollIntoView({ behavior: 'smooth' });
     }
 
-    function excluirPedidoSalvo(index) {
-        if (confirm("Tem certeza que deseja excluir este registro do histórico?")) {
-            let pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
+    async function excluirPedidoSalvo(index) {
+        if (!confirm("Tem certeza que deseja excluir este registro do histórico?")) return;
+
+        const pedidos = JSON.parse(localStorage.getItem('pedidos_bourbon') || '[]');
+        const pedido = pedidos[index];
+        if (!pedido) return;
+
+        try {
+            if (pedido.firebaseId && typeof window.excluirDoFirebase === 'function') {
+                await window.excluirDoFirebase(pedido.firebaseId);
+            }
+
             pedidos.splice(index, 1);
             localStorage.setItem('pedidos_bourbon', JSON.stringify(pedidos));
             abrirModalHistorico();
+        } catch (err) {
+            console.error('Erro ao excluir pedido:', err);
+            alert('Não foi possível excluir o pedido da Nuvem. O registro foi mantido.\n\nErro: ' + (err.message || err));
         }
     }
 
-    function exportarExcelPedidoAtual() {
+    function imprimirPedido() {
+        const secao = document.getElementById('secaoPedidoValorizado');
+        if (!secao) {
+            alert('Pedido não encontrado para impressão.');
+            return;
+        }
+
+        const resumoAtivo = document.getElementById('subTabResumo')?.classList.contains('ativa');
+        const copia = secao.cloneNode(true);
+
+        copia.querySelector('.sub-tabs-relatorio')?.remove();
+        copia.querySelector('.acoes-relatorio')?.remove();
+
+        const resumo = copia.querySelector('#conteudoSubTabResumo');
+        const detalhamento = copia.querySelector('#conteudoSubTabDetalhamento');
+        if (resumo) resumo.style.display = resumoAtivo ? 'block' : 'none';
+        if (detalhamento) detalhamento.style.display = resumoAtivo ? 'none' : 'block';
+
+        const estilos = Array.from(document.head.querySelectorAll('style, link[rel="stylesheet"]'))
+            .map(el => el.outerHTML).join('\n');
+
+        const janela = window.open('', '_blank', 'width=1000,height=800');
+        if (!janela) {
+            alert('O navegador bloqueou a janela de impressão. Permita pop-ups para este site.');
+            return;
+        }
+
+        janela.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+            <title>Pedido de Extras Valorizado</title>${estilos}
+            <style>
+                @page { size: A4 portrait; margin: 10mm; }
+                body { margin: 0; background: #fff; }
+                .secao-pedido-valorizado { display: block !important; margin: 0 !important; box-shadow: none !important; }
+                .acoes-relatorio, .sub-tabs-relatorio { display: none !important; }
+                tr { page-break-inside: avoid; }
+            </style></head><body>${copia.outerHTML}
+            <script>window.onload=function(){setTimeout(function(){window.print();},300);};
+            window.onafterprint=function(){window.close();};<\/script></body></html>`);
+        janela.document.close();
+    }
+
+    async function exportarExcelPedidoAtual() {
         const dataStr = dadosSemana[diaAtivoIndex].data;
-        let csvContent = "data:text/csv;charset=utf-8,Cargo / Funcao;Turno;Horario(s) Entrada (Qtd);Qtd Extras;Valor Diaria (RS);Subtotal (RS)\n";
-        
-        relatorioAtualDados.resumo.forEach(item => {
-            csvContent += `"${item.cargo}";"${item.turno}";"${item.horariosTexto}";"${item.qtd}";"R$ ${item.valorDiaria.toFixed(2)}";"R$ ${item.subtotal.toFixed(2)}"\n`;
-        });
+        const diaNome = dadosSemana[diaAtivoIndex].diaNome || 'Pedido';
 
-        csvContent += `\n\nDETALHAMENTO POR LOCAL\nLocal;Turno;Cargo / Funcao;Qtd Extras;Entrada;Valor Diaria (RS);Subtotal (RS)\n`;
-        relatorioAtualDados.detalhamento.forEach(item => {
-            csvContent += `"${item.setor}";"${item.turno}";"${item.cargo}";"${item.qtd}";"${item.entrada}";"R$ ${item.valorDiaria.toFixed(2)}";"R$ ${item.subtotal.toFixed(2)}"\n`;
-        });
+        if (!relatorioAtualDados || !Array.isArray(relatorioAtualDados.resumo) || relatorioAtualDados.resumo.length === 0) {
+            alert('Gere primeiro o pedido antes de exportar para Excel!');
+            return;
+        }
 
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `Pedido_A&B_Completo_${dataStr}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        if (typeof ExcelJS === 'undefined') {
+            alert('A biblioteca do Excel não foi carregada. Verifique sua conexão com a internet e tente novamente.');
+            return;
+        }
+
+        try {
+            const workbook = new ExcelJS.Workbook();
+            workbook.creator = 'Painel Master A&B - Bourbon';
+            workbook.created = new Date();
+            workbook.modified = new Date();
+            workbook.properties.date1904 = false;
+
+            const resumo = Array.isArray(relatorioAtualDados.resumo) ? relatorioAtualDados.resumo : [];
+            const detalhamento = Array.isArray(relatorioAtualDados.detalhamento) ? relatorioAtualDados.detalhamento : [];
+            const custoTotal = Number(relatorioAtualDados.totalCustoGeral || 0);
+            const qtdExtras = Number(relatorioAtualDados.totalQtdExtras || 0);
+
+            const borda = {
+                top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                right: { style: 'thin', color: { argb: 'FFCBD5E1' } }
+            };
+
+            const corPrimaria = 'FF00463F';
+            const corCabecalho = 'FFE6ECEB';
+            const corTotal = 'FFF1F5F9';
+
+            function estilizarCabecalho(row) {
+                row.height = 24;
+                row.eachCell(cell => {
+                    cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: corPrimaria } };
+                    cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                    cell.border = borda;
+                });
+            }
+
+            function estilizarTabela(row) {
+                row.eachCell(cell => {
+                    cell.border = borda;
+                    cell.alignment = { vertical: 'middle', wrapText: true };
+                });
+            }
+
+            function estilizarTotal(row) {
+                row.eachCell(cell => {
+                    cell.font = { bold: true, color: { argb: corPrimaria } };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: corTotal } };
+                    cell.border = borda;
+                    cell.alignment = { vertical: 'middle' };
+                });
+            }
+
+            // ============================
+            // ABA 1 - RESUMO
+            // ============================
+            const wsResumo = workbook.addWorksheet('Resumo', {
+                views: [{ state: 'frozen', ySplit: 5 }]
+            });
+
+            wsResumo.columns = [
+                { key: 'cargo', width: 28 },
+                { key: 'turno', width: 16 },
+                { key: 'horarios', width: 32 },
+                { key: 'qtd', width: 14 },
+                { key: 'valorDiaria', width: 18 },
+                { key: 'subtotal', width: 18 }
+            ];
+
+            wsResumo.mergeCells('A1:F1');
+            wsResumo.getCell('A1').value = `RELATÓRIO DE PEDIDO - ${diaNome.toUpperCase()}`;
+            wsResumo.getCell('A1').font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+            wsResumo.getCell('A1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: corPrimaria } };
+            wsResumo.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' };
+            wsResumo.getRow(1).height = 30;
+
+            wsResumo.mergeCells('A2:F2');
+            wsResumo.getCell('A2').value = `Data da operação: ${dataStr}`;
+            wsResumo.getCell('A2').font = { bold: true, color: { argb: corPrimaria } };
+
+            wsResumo.getCell('A4').value = 'Quantidade total de extras';
+            wsResumo.getCell('B4').value = qtdExtras;
+            wsResumo.getCell('D4').value = 'Custo total';
+            wsResumo.getCell('E4').value = custoTotal;
+            wsResumo.getCell('E4').numFmt = 'R$ #,##0.00';
+
+            ['A4', 'B4', 'D4', 'E4'].forEach(ref => {
+                wsResumo.getCell(ref).font = { bold: true };
+                wsResumo.getCell(ref).border = borda;
+                wsResumo.getCell(ref).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: corCabecalho } };
+            });
+
+            const cabResumo = wsResumo.addRow([
+                'Cargo / Função',
+                'Turno',
+                'Horário(s) Entrada (Qtd)',
+                'Qtd Extras',
+                'Valor Diária (R$)',
+                'Subtotal (R$)'
+            ]);
+            estilizarCabecalho(cabResumo);
+
+            // A linha 5 é o cabeçalho; os dados começam na linha 6.
+            const primeiraLinhaResumo = 6;
+            resumo.forEach(item => {
+                const row = wsResumo.addRow([
+                    item.cargo || '',
+                    item.turno || '',
+                    item.horariosTexto || '',
+                    Number(item.qtd || 0),
+                    Number(item.valorDiaria || 0),
+                    Number(item.subtotal || 0)
+                ]);
+                row.getCell(5).numFmt = 'R$ #,##0.00';
+                row.getCell(6).numFmt = 'R$ #,##0.00';
+                estilizarTabela(row);
+            });
+
+            const ultimaLinhaResumo = Math.max(primeiraLinhaResumo, wsResumo.lastRow.number);
+            const totalResumo = wsResumo.addRow([
+                'TOTAL',
+                '',
+                '',
+                { formula: `SUM(D${primeiraLinhaResumo}:D${ultimaLinhaResumo})` },
+                '',
+                { formula: `SUM(F${primeiraLinhaResumo}:F${ultimaLinhaResumo})` }
+            ]);
+            totalResumo.getCell(6).numFmt = 'R$ #,##0.00';
+            estilizarTotal(totalResumo);
+
+            wsResumo.autoFilter = {
+                from: `A5:F${ultimaLinhaResumo}`,
+                to: `A5:F${ultimaLinhaResumo}`
+            };
+
+            // ============================
+            // ABA 2 - DETALHAMENTO
+            // ============================
+            const wsDetalhe = workbook.addWorksheet('Detalhamento', {
+                views: [{ state: 'frozen', ySplit: 2 }]
+            });
+
+            wsDetalhe.columns = [
+                { key: 'setor', width: 28 },
+                { key: 'turno', width: 16 },
+                { key: 'cargo', width: 28 },
+                { key: 'qtd', width: 14 },
+                { key: 'entrada', width: 16 },
+                { key: 'valorDiaria', width: 18 },
+                { key: 'subtotal', width: 18 }
+            ];
+
+            wsDetalhe.mergeCells('A1:G1');
+            wsDetalhe.getCell('A1').value = `DETALHAMENTO - ${diaNome.toUpperCase()} (${dataStr})`;
+            wsDetalhe.getCell('A1').font = { size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+            wsDetalhe.getCell('A1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: corPrimaria } };
+            wsDetalhe.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' };
+            wsDetalhe.getRow(1).height = 30;
+
+            const cabDetalhe = wsDetalhe.addRow([
+                'Local / Setor',
+                'Turno',
+                'Cargo / Função',
+                'Qtd Extras',
+                'Entrada',
+                'Valor Diária (R$)',
+                'Subtotal (R$)'
+            ]);
+            estilizarCabecalho(cabDetalhe);
+
+            const primeiraLinhaDetalhe = 3;
+            detalhamento.forEach(item => {
+                const row = wsDetalhe.addRow([
+                    item.setor || '',
+                    item.turno || '',
+                    item.cargo || '',
+                    Number(item.qtd || 0),
+                    item.entrada || '',
+                    Number(item.valorDiaria || 0),
+                    Number(item.subtotal || 0)
+                ]);
+                row.getCell(6).numFmt = 'R$ #,##0.00';
+                row.getCell(7).numFmt = 'R$ #,##0.00';
+                estilizarTabela(row);
+            });
+
+            const ultimaLinhaDetalhe = Math.max(primeiraLinhaDetalhe, wsDetalhe.lastRow.number);
+            const totalDetalhe = wsDetalhe.addRow([
+                'TOTAL',
+                '',
+                '',
+                { formula: `SUM(D${primeiraLinhaDetalhe}:D${ultimaLinhaDetalhe})` },
+                '',
+                '',
+                { formula: `SUM(G${primeiraLinhaDetalhe}:G${ultimaLinhaDetalhe})` }
+            ]);
+            totalDetalhe.getCell(7).numFmt = 'R$ #,##0.00';
+            estilizarTotal(totalDetalhe);
+
+            wsDetalhe.autoFilter = {
+                from: `A2:G${ultimaLinhaDetalhe}`,
+                to: `A2:G${ultimaLinhaDetalhe}`
+            };
+
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            });
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Pedido_${diaNome}_${dataStr}.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (erro) {
+            console.error('Erro ao gerar Excel:', erro);
+            alert('Não foi possível gerar o arquivo Excel. Veja o console do navegador para mais detalhes.');
+        }
     }
 
     async function exportarExcelPedidoSalvo(id) {
@@ -1891,8 +2217,8 @@ function salvarValoresNoFirebase() {
             estilizarTotal(totalResumo);
 
             wsResumo.autoFilter = {
-                from: `A6:F${ultimaLinhaResumo}`,
-                to: `A6:F${ultimaLinhaResumo}`
+                from: `A5:F${ultimaLinhaResumo}`,
+                to: `A5:F${ultimaLinhaResumo}`
             };
 
             // ============================
@@ -2103,19 +2429,38 @@ function salvarValoresNoFirebase() {
     }
 
     window.salvarNoFirebase = function(dados) {
-        database.ref('historico_pedidos').push({
+        const ref = database.ref('historico_pedidos').push();
+        return ref.set({
             ...dados,
+            firebaseId: ref.key,
             dataRegistro: new Date().toLocaleString("pt-BR")
-        }).catch(function(err) {
-            console.error("Erro ao salvar no banco:", err);
+        }).then(function() {
+            return ref.key;
         });
     };
 
+    window.excluirDoFirebase = function(firebaseId) {
+        if (!firebaseId) return Promise.resolve();
+        return database.ref(`historico_pedidos/${firebaseId}`).remove();
+    };
+
     database.ref('historico_pedidos').on('value', function(snapshot) {
-        var dadosDoFirebase = snapshot.val();
-        if (dadosDoFirebase) {
-            var listaPedidos = Object.values(dadosDoFirebase);
-            localStorage.setItem('pedidos_bourbon', JSON.stringify(listaPedidos));
+        const listaPedidos = [];
+        snapshot.forEach(function(child) {
+            listaPedidos.push({
+                firebaseId: child.key,
+                ...child.val()
+            });
+        });
+
+        // Firebase é a fonte oficial do histórico quando conectado.
+        // O reverse mantém os registros mais recentes no topo.
+        listaPedidos.reverse();
+        localStorage.setItem('pedidos_bourbon', JSON.stringify(listaPedidos));
+
+        if (typeof abrirModalHistorico === 'function') {
+            const modal = document.getElementById('modalHistorico');
+            if (modal && modal.style.display === 'flex') abrirModalHistorico();
         }
     });
 </script>
